@@ -46,11 +46,11 @@ include_directories("${PROJECT_SOURCE_DIR}/ext/imgui")
 include_directories("${PROJECT_SOURCE_DIR}/ext/imgui/backends")
 
 add_custom_target(copy_assets1
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/asset ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/asset
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/assets
 )
 add_dependencies(${PROJECT_NAME} copy_assets1)
 add_custom_target(copy_assets2
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/asset ${CMAKE_CURRENT_BINARY_DIR}/asset
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}/assets
 )
 add_dependencies(${PROJECT_NAME} copy_assets2)
 

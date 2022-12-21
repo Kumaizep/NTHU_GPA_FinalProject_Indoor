@@ -62,14 +62,14 @@ void initialization(GLFWwindow *window)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.Fonts->AddFontFromFileTTF("asset/fonts/NotoSansCJK-Medium.ttc", 20.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+    io.Fonts->AddFontFromFileTTF("assets/fonts/NotoSansCJK-Medium.ttc", 20.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     
     ImGui::StyleColorsLight();
     
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 410 core");
 
-    models.push_back(Model("asset/indoor/Grey_White_Room.obj"));
+    models.push_back(Model("assets/indoor/Grey_White_Room.obj"));
 
     timerLast = glfwGetTime();
     mouseLast = vec2(0.0f, 0.0f);   
@@ -430,8 +430,8 @@ int main(int argc, char **argv)
     }
 
     dumpInfo();
-    Shader shader("asset/vertex.vs.glsl", "asset/fragment.fs.glsl");
-    Shader frameShader("asset/frameVertex.vs.glsl", "asset/frameFragment.fs.glsl");
+    Shader shader("assets/vertex.vs.glsl", "assets/fragment.fs.glsl");
+    Shader frameShader("assets/frameVertex.vs.glsl", "assets/frameFragment.fs.glsl");
     Camera camera = Camera()
                         .withPosition(vec3(4.0f, 1.0f, -1.5f))
                         .withFar(5000.0f)
