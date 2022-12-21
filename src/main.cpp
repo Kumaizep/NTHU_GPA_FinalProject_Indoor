@@ -37,6 +37,8 @@ bool compareBarEnable = false;
 float compareBarX = INIT_WIDTH / 2.0f;
 bool compareBarMoveEnable = false;
 
+bool normalMappingEnabled = false;
+
 vec2 magnifierCenter = vec2(frameWidth, frameHeight) / 2.0f;
 float magnifierRadius = 70.0f;
 bool magnifierResizeEnable = false;
@@ -70,6 +72,9 @@ void initialization(GLFWwindow *window)
     ImGui_ImplOpenGL3_Init("#version 410 core");
 
     models.push_back(Model("assets/indoor/Grey_White_Room.obj"));
+    models.push_back(Model("assets/indoor/trice.obj")
+                        .withPosition(vec3(2.05, 0.628725, -1.9))
+                        .withScale(vec3(0.001, 0.001, 0.001)));
 
     timerLast = glfwGetTime();
     mouseLast = vec2(0.0f, 0.0f);   
@@ -179,10 +184,11 @@ void display(Shader& shader, Camera& camera)
     shader.setMat4("um4p", projection);
     shader.setMat4("um4mv", view);
     shader.setInt("outputMode", outputMode);
-    
+    shader.setBool("normalMappingEnabled", normalMappingEnabled);
 
     for (auto& it : models)
     {
+        shader.setMat4("um4mv", view * it.getModelMatrix());
         it.draw(shader);
     }
 }
@@ -362,6 +368,26 @@ void guiMenu()
                 if (ImGui::MenuItem("　　Disable"))
                 {
                     compareBarEnable = false;
+                }
+                ImGui::TextDisabled("＞　Enabled");
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Normal Mapping"))
+        {
+            if (!normalMappingEnabled)
+            {
+                ImGui::TextDisabled("＞　Disabled");
+                if (ImGui::MenuItem("　　Enable"))
+                {
+                    normalMappingEnabled = true;
+                }
+            }
+            else
+            {
+                if (ImGui::MenuItem("　　Disable"))
+                {
+                    normalMappingEnabled = false;
                 }
                 ImGui::TextDisabled("＞　Enabled");
             }

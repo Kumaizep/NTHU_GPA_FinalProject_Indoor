@@ -1,6 +1,7 @@
 #ifndef MODEL_HPP
 #define MODEL_HPP
 
+#include "GLM/fwd.hpp"
 #include "mesh.hpp"
 
 #include "assimp/Importer.hpp"
@@ -27,15 +28,38 @@ public:
         loadModel(path);
     }
 
+    Model& withPosition(vec3 val)
+    {
+        position = val;
+        modelMatrix = translate(mat4(1.0f), position) * scale(mat4(1.0f), scale3D);
+        return *this;
+    }
+
+    Model& withScale(vec3 val)
+    {
+        scale3D = val;
+        modelMatrix = translate(mat4(1.0f), position) * scale(mat4(1.0f), scale3D);
+        return *this;
+    }
+
     void draw(Shader& shader)
     {
         // cout << "DEBUG::MODEL::C-MODEL-F-D: " << meshes.size() << endl;
         for (GLuint i = 0; i < meshes.size(); i++)
             meshes[i].draw(shader);
     }
+
+    mat4 getModelMatrix()
+    {
+        return modelMatrix;
+    }
+
 private:
     vector<Mesh> meshes;
     string directory;
+    vec3 position = vec3(0.0f);
+    vec3 scale3D = vec3(1.0f);
+    mat4 modelMatrix = mat4(1.0f);
 
     void loadModel(const string path)
     {
@@ -89,8 +113,8 @@ private:
             if (mesh->mTextureCoords[0])
             {
                 vertex.texCoords = vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-                // vertex.tangent   = vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-                // vertex.bitangent = vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+                vertex.tangent   = vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+                vertex.bitangent = vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
             }
             else
             {

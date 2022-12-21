@@ -16,12 +16,12 @@ struct Vertex
     // texCoords
     vec2 texCoords;
     // tangent
-    // vec3 tangent;
+    vec3 tangent;
     // bitangent
-    // vec3 bitangent;
-    // bone indexes which will influence this vertex
+    vec3 bitangent;
+    // // bone indexes which will influence this vertex
     // int mBoneIDs[MAX_BONE_INFLUENCE];
-    // weights from each bone
+    // // weights from each bone
     // float mWeights[MAX_BONE_INFLUENCE];
 };
 
@@ -58,6 +58,14 @@ public:
         : vertices(vertices), indices(indices), textures(textures), material(material)
     {
         setMesh();
+        for (GLuint i = 0; i < textures.size(); i++)
+        {
+            if (textures[i].type == "textureDiffuse")
+                haveMapDiffuse = 1;
+            if (textures[i].type == "textureHeight")
+                haveMapHeight = 1;
+            cout << textures[i].type;
+        }
     }
 
     void draw(Shader& shader) 
@@ -82,6 +90,8 @@ public:
 
 private:
     GLuint VAO, VBO, EBO;
+    int haveMapDiffuse = 0;
+    int haveMapHeight = 0;
     void setMesh()
     {
         // cout << "222 ";
@@ -108,13 +118,13 @@ private:
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
             (GLvoid*)offsetof(Vertex, texCoords));
 
-        // glEnableVertexAttribArray(3);
-        // glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
-        //     (GLvoid*)offsetof(Vertex, tangent));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
+            (GLvoid*)offsetof(Vertex, tangent));
 
-        // glEnableVertexAttribArray(4);
-        // glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
-        //     (GLvoid*)offsetof(Vertex, bitangent));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 
+            (GLvoid*)offsetof(Vertex, bitangent));
 
         // glEnableVertexAttribArray(5);
         // glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex),
@@ -140,6 +150,8 @@ private:
         shader.setInt("illum", material.illum);
 
         shader.setInt("textureNumber", textures.size());
+        shader.setInt("haveMapDiffuse", haveMapDiffuse);
+        shader.setInt("haveMapHeight", haveMapHeight);
     }
 };
 
