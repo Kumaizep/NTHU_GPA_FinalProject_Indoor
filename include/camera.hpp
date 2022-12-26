@@ -24,8 +24,8 @@ public:
     // perspective status
     float fieldOfView;
     float aspect;
-    float near;
-    float far;
+    float nearDinstance;
+    float farDinstance;
     // move parameter
     float moveSpeed;
     // trackball parameter
@@ -41,8 +41,8 @@ public:
         right          = vec3(0.0f, 0.0f, 1.0f);
         fieldOfView    = 60.0f;
         aspect         = (float)INIT_WIDTH / (float)INIT_HEIGHT;
-        near           = 0.1f;
-        far            = 1000.0f;
+        nearDinstance  = 0.1f;
+        farDinstance   = 1000.0f;
         moveSpeed      = 10.0f;
         trackballSpeed = 0.1f;
         theta          = 0.0f;
@@ -87,13 +87,13 @@ public:
 
     Camera& withNear(float val)
     {
-        near = val;
+        nearDinstance = val;
         return *this;
     }
 
     Camera& withFar(float val)
     {
-        far = val;
+        farDinstance = val;
         return *this;
     }
 
@@ -125,7 +125,7 @@ public:
 
     mat4 getPerspective()
     {
-        return perspective(radians(fieldOfView), aspect, near, far);
+        return perspective(radians(fieldOfView), aspect, nearDinstance, farDinstance);
     }
 
     mat4 getView()

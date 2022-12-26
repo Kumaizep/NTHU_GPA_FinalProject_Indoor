@@ -344,7 +344,8 @@ void guiMenu()
             {
                 if (filterMode == i)
                 {
-                    ImGui::TextDisabled(("＞　" + string(filterTypes[i])).c_str());
+                    string msg = string("＞　") + string(filterTypes[i]);
+                    ImGui::TextDisabled("%s", msg.c_str());
                 }
                 else if (ImGui::MenuItem(("　　" + string(filterTypes[i])).c_str()))
                 {
