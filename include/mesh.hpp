@@ -39,7 +39,7 @@ struct MaterialColor
     float Ni;
     // refractive
     float d;
-    //
+    // shineness
     float Ns;
     //
     int illum;

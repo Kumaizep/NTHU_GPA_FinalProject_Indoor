@@ -39,7 +39,7 @@ public:
 
         createFrameVextexObject();
 
-        filterTextures.push_back(Texture("asset/textures/noise_texture_0001.png", "textureUnknow"));
+        // filterTextures.push_back(Texture("asset/textures/noise_texture_0001.png", "textureUnknow"));
     }
 
     void draw(Shader& shader)

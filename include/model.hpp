@@ -142,29 +142,28 @@ private:
     MaterialColor processMaterialColor(aiMesh* mesh, const aiScene* scene)
     {
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-        MaterialColor mat;
+        MaterialColor materialColor;
         aiColor3D color;
         float fvalue;
-        int ivalue;
  
         material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-        mat.Ka = vec3(color.r, color.g, color.b);
+        materialColor.Ka = vec3(color.r, color.g, color.b);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-        mat.Kd = vec3(color.r, color.g, color.b);
+        materialColor.Kd = vec3(color.r, color.g, color.b);
         material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-        mat.Ks = vec3(color.r, color.g, color.b);
+        materialColor.Ks = vec3(color.r, color.g, color.b);
         material->Get(AI_MATKEY_COLOR_EMISSIVE, color);
-        mat.Ke = vec3(color.r, color.g, color.b);
+        materialColor.Ke = vec3(color.r, color.g, color.b);
         material->Get(AI_MATKEY_REFRACTI, fvalue);
-        mat.Ni = fvalue;
+        materialColor.Ni = fvalue;
         material->Get(AI_MATKEY_COLOR_TRANSPARENT, fvalue);
-        mat.d = fvalue;
+        materialColor.d = fvalue;
         material->Get(AI_MATKEY_SHININESS, fvalue);
-        mat.Ns = fvalue;
-        material->Get(AI_MATKEY_SHADING_MODEL, ivalue);
-        mat.illum = ivalue;
+        materialColor.Ns = fvalue;
+        material->Get(AI_MATKEY_SHADING_MODEL, fvalue);
+        materialColor.illum = fvalue;
 
-        return mat;
+        return materialColor;
     }
 
     vector<Texture> processTextures(aiMesh* mesh, const aiScene* scene)

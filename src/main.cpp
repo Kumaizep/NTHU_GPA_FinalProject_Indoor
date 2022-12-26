@@ -338,41 +338,41 @@ void guiMenu()
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("FrameFilter"))
-        {
-            for (int i = 0; i < 7; ++i)
-            {
-                if (filterMode == i)
-                {
-                    ImGui::TextDisabled(("＞　" + string(filterTypes[i])).c_str());
-                }
-                else if (ImGui::MenuItem(("　　" + string(filterTypes[i])).c_str()))
-                {
-                    filterMode = i;
-                }
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("CompareBar"))
-        {
-            if (!compareBarEnable)
-            {
-                ImGui::TextDisabled("＞　Disabled");
-                if (ImGui::MenuItem("　　Enable"))
-                {
-                    compareBarEnable = true;
-                }
-            }
-            else
-            {
-                if (ImGui::MenuItem("　　Disable"))
-                {
-                    compareBarEnable = false;
-                }
-                ImGui::TextDisabled("＞　Enabled");
-            }
-            ImGui::EndMenu();
-        }
+        // if (ImGui::BeginMenu("FrameFilter"))
+        // {
+        //     for (int i = 0; i < 1; ++i)
+        //     {
+        //         if (filterMode == i)
+        //         {
+        //             ImGui::TextDisabled("%s", ("＞　" + string(filterTypes[i])).c_str());
+        //         }
+        //         else if (ImGui::MenuItem(("　　" + string(filterTypes[i])).c_str()))
+        //         {
+        //             filterMode = i;
+        //         }
+        //     }
+        //     ImGui::EndMenu();
+        // }
+        // if (ImGui::BeginMenu("CompareBar"))
+        // {
+        //     if (!compareBarEnable)
+        //     {
+        //         ImGui::TextDisabled("＞　Disabled");
+        //         if (ImGui::MenuItem("　　Enable"))
+        //         {
+        //             compareBarEnable = true;
+        //         }
+        //     }
+        //     else
+        //     {
+        //         if (ImGui::MenuItem("　　Disable"))
+        //         {
+        //             compareBarEnable = false;
+        //         }
+        //         ImGui::TextDisabled("＞　Enabled");
+        //     }
+        //     ImGui::EndMenu();
+        // }
         if (ImGui::BeginMenu("Normal Mapping"))
         {
             if (!normalMappingEnabled)
@@ -401,15 +401,15 @@ void guiMenu()
             ImGui::Text("　　　Z/X:　");
             ImGui::Text("　　　　　Adjust the eye height up/down　");
             ImGui::Text("　Mouse:　");
-            ImGui::Text("　　　Right button:　");
-            ImGui::Text("　　　　　Click menu and control compare-bar/magnifier　");
-            ImGui::Text("　　　　　Compare-bar:　");
-            ImGui::Text("　　　　　　　Drag the grey bar to adjust the position　");
-            ImGui::Text("　　　　　Magnifier:　");
-            ImGui::Text("　　　　　　　Drag the grey dot to resize magnifier　");
-            ImGui::Text("　　　　　　　Drag the inside to adjust the position　");
+            // ImGui::Text("　　　Right button:　");
+            // ImGui::Text("　　　　　Click menu and control compare-bar/magnifier　");
+            // ImGui::Text("　　　　　Compare-bar:　");
+            // ImGui::Text("　　　　　　　Drag the grey bar to adjust the position　");
+            // ImGui::Text("　　　　　Magnifier:　");
+            // ImGui::Text("　　　　　　　Drag the grey dot to resize magnifier　");
+            // ImGui::Text("　　　　　　　Drag the inside to adjust the position　");
             ImGui::Text("　　　Middle button:　");
-            ImGui::Text("　　　　　Drag anywhere");
+            ImGui::Text("　　　　　track ball");
             ImGui::EndMenu();
         }     
         ImGui::EndMenuBar();
