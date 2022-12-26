@@ -1,9 +1,0 @@
-libdir=/usr/x86_64-w64-mingw32/lib
-includedir=/usr/x86_64-w64-mingw32/include
-
-Name: FinalProjectIndoor
-Description: Import various well-known 3D model formats in an uniform manner.
-Version: 5.2.4
-Libs: -L${libdir} -lassimp
-Libs.private:  
-Cflags: -I${includedir}

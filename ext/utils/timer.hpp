@@ -76,8 +76,7 @@ private:
 #elif __linux__
 	long lastUpdate;
 #else
-	float frequency;
-	__int64 lastUpdate;
+	#error no_timer_implementation_available_in_this_environment
 #endif
 };
 

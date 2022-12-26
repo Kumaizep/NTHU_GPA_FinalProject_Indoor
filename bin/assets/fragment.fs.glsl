@@ -62,14 +62,22 @@ void main()
 		{
 			vec4 Kdiffuse;
 			if (colorChannel0 > 1)
+			{
 				Kdiffuse = texture(texture0, vertexData.texcoord);
+			}
 			else
+			{
 				Kdiffuse = texture(texture0, vertexData.texcoord).rrra;
+			}
 
 			if(Kdiffuse.a < 0.5)
+			{
 				discard;
+			}
 			else
+			{
 				blinnPhong(Kdiffuse.rgb, vertexData.N, vertexData.L, vertexData.H);
+			}
 		}
 		else if (haveMapHeight == 1 && normalMappingEnabled)
 		{
