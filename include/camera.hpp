@@ -137,6 +137,7 @@ public:
         lookAtDistance = length(val - position);
         front = normalize(val - position);
         updateCameraRotationStatus();
+        updateCameraPositionStatus();
     }
 
     vec3 getPosition()
@@ -166,9 +167,9 @@ public:
         float shift = moveSpeed * timeDifferent;
         cout << "DEBUG::MAIN::C-CAMERA-F-PM-1: " << shift << endl;
         if (moveDirction == FORWARD)
-            position += front * shift;
+            position += vec3(front.x, 0.0f, front.z) * shift;
         if (moveDirction == BACKWARD)
-            position -= front * shift;
+            position -= vec3(front.x, 0.0f, front.z) * shift;
         if (moveDirction == LEFT)
             position -= right * shift;
         if (moveDirction == RIGHT)
@@ -203,8 +204,8 @@ private:
 
     void updateCameraRotationStatus()
     {
-        theta = degrees(atan(front.z / front.x));
-        phi = degrees(atan(front.y / sqrt(pow(front.x, 2) + pow(front.z, 2))));
+        theta = degrees(atan2(front.z, front.x));
+        phi = degrees(atan2(front.y, sqrt(pow(front.x, 2) + pow(front.z, 2))));
 
         right = normalize(cross(front, vec3(0.0f, 1.0f, 0.0f)));
         top = normalize(cross(right, front));

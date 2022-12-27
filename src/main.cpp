@@ -57,6 +57,8 @@ void initialization(GLFWwindow *window)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.KeyMap[ImGuiKey_Delete] = GLFW_KEY_DELETE;
+    io.KeyMap[ImGuiKey_Backspace] = GLFW_KEY_BACKSPACE;
     io.Fonts->AddFontFromFileTTF("assets/fonts/NotoSansCJK-Medium.ttc", 20.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     
     ImGui::StyleColorsLight();
