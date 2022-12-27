@@ -2,6 +2,8 @@
 #define CAMERA_HPP
 
 #include "common.hpp"
+#include <cmath>
+#include <math.h>
 
 enum MoveDirection
 {
@@ -21,6 +23,7 @@ public:
     vec3 front;
     vec3 top;
     vec3 right;
+    float lookAtDistance;
     // perspective status
     float fieldOfView;
     float aspect;
@@ -39,6 +42,7 @@ public:
         front          = vec3(1.0f, 0.0f, 0.0f);
         top            = vec3(0.0f, 1.0f, 0.0f);
         right          = vec3(0.0f, 0.0f, 1.0f);
+        lookAtDistance = 1.0f;
         fieldOfView    = 60.0f;
         aspect         = (float)INIT_WIDTH / (float)INIT_HEIGHT;
         nearDinstace   = 0.1f;
@@ -112,15 +116,37 @@ public:
     Camera& withTheta(float val)
     {
         theta = val;
-        updateCameraStatus();
+        updateCameraPositionStatus();
         return *this;
     }
     Camera& withPhi(float val)
     {
         if (val < 85 && val> -85)
             phi = val;
-        updateCameraStatus();
+        updateCameraPositionStatus();
         return *this;
+    }
+
+    void setPosition(vec3 val)
+    {
+        position = val;
+    }
+
+    void setLookAt(vec3 val)
+    {
+        lookAtDistance = length(val - position);
+        front = normalize(val - position);
+        updateCameraRotationStatus();
+    }
+
+    vec3 getPosition()
+    {
+        return position;
+    }
+
+    vec3 getLookAt()
+    {
+        return lookAtDistance * front + position;
     }
 
     mat4 getPerspective()
@@ -160,16 +186,25 @@ public:
         float newPhi = phi + phiDifferent * trackballSpeed;
         if (newPhi < 85 && newPhi> -85)
             phi = newPhi;
-        updateCameraStatus();
+        updateCameraPositionStatus();
     };
 
 private:
-    void updateCameraStatus()
+    void updateCameraPositionStatus()
     {
         front.x = cos(radians(theta)) * cos(radians(phi));
         front.y = sin(radians(phi));
         front.z = sin(radians(theta)) * cos(radians(phi));
         front = normalize(front);
+
+        right = normalize(cross(front, vec3(0.0f, 1.0f, 0.0f)));
+        top = normalize(cross(right, front));
+    }
+
+    void updateCameraRotationStatus()
+    {
+        theta = degrees(atan(front.z / front.x));
+        phi = degrees(atan(front.y / sqrt(pow(front.x, 2) + pow(front.z, 2))));
 
         right = normalize(cross(front, vec3(0.0f, 1.0f, 0.0f)));
         top = normalize(cross(right, front));

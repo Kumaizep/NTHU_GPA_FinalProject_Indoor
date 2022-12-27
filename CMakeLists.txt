@@ -79,6 +79,8 @@ target_link_libraries(${PROJECT_NAME} OpenGL::GL)
 find_package(assimp REQUIRED)
 target_link_libraries(${PROJECT_NAME} assimp)
 
+target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS})
+
 if (MSVC)
     add_definitions("_CRT_SECURE_NO_WARNINGS")
     set(CMAKE_CXX_FLAGS_DEBUG  "${CMAKE_CXX_FLAGS_DEBUG} /bigobj /MTd")

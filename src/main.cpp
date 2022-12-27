@@ -33,17 +33,10 @@ int outputMode = 0;
 int filterMode = 0;
 int testMode = 0;
 
-bool compareBarEnable = false;
-float compareBarX = INIT_WIDTH / 2.0f;
-bool compareBarMoveEnable = false;
+float cameraPosition[] = {1.0, 1.0, 1.0};
+float cameraLookAt[] = {1.0, 1.0, 1.0};
 
 bool normalMappingEnabled = false;
-
-vec2 magnifierCenter = vec2(frameWidth, frameHeight) / 2.0f;
-float magnifierRadius = 70.0f;
-bool magnifierResizeEnable = false;
-bool magnifierMoveEnable = false;
-vec2 magnifierMoveOffset = vec2(0.0f);
 
 bool needUpdateFBO = false;
 
@@ -86,6 +79,24 @@ void timerUpdate()
     timerCurrent = glfwGetTime();
 }
 
+void setGUICameraStatus(Camera& camera)
+{
+    vec3 positionVector = camera.getPosition();
+    vec3 lookAtVector = camera.getLookAt();
+    cameraPosition[0] = positionVector.x;
+    cameraPosition[1] = positionVector.y;
+    cameraPosition[2] = positionVector.z;
+    cameraLookAt[0] = lookAtVector.x;
+    cameraLookAt[1] = lookAtVector.y;
+    cameraLookAt[2] = lookAtVector.z;
+}
+
+void processCameraMoveWithDirection(Camera& camera, MoveDirection moveDirction, float timeDifferent)
+{
+    camera.processMove(moveDirction, timeDifferent);
+    setGUICameraStatus(camera);
+}
+
 void processCameraMove(Camera& camera)
 {
     float timeDifferent = 0.0f;
@@ -93,17 +104,17 @@ void processCameraMove(Camera& camera)
         timeDifferent = timerCurrent - timerLast;
 
     if (keyPressing[GLFW_KEY_W])
-        camera.processMove(FORWARD, timeDifferent);
+        processCameraMoveWithDirection(camera, FORWARD, timeDifferent);
     if (keyPressing[GLFW_KEY_S])
-        camera.processMove(BACKWARD, timeDifferent);
+        processCameraMoveWithDirection(camera, BACKWARD, timeDifferent);
     if (keyPressing[GLFW_KEY_A])
-        camera.processMove(LEFT, timeDifferent);
+        processCameraMoveWithDirection(camera, LEFT, timeDifferent);
     if (keyPressing[GLFW_KEY_D])
-        camera.processMove(RIGHT, timeDifferent);
+        processCameraMoveWithDirection(camera, RIGHT, timeDifferent);
     if (keyPressing[GLFW_KEY_Z])
-        camera.processMove(UP, timeDifferent);
+        processCameraMoveWithDirection(camera, UP, timeDifferent);
     if (keyPressing[GLFW_KEY_X])
-        camera.processMove(DOWN, timeDifferent);
+        processCameraMoveWithDirection(camera, DOWN, timeDifferent);
 }
 
 void processCameraTrackball(Camera& camera, GLFWwindow *window)
@@ -113,48 +124,14 @@ void processCameraTrackball(Camera& camera, GLFWwindow *window)
     mouseLast = mouseCurrent;
     mouseCurrent = vec2(x, y);
 
-    vec2 mouseDifferent = vec2(0.0f, 0.0f);
     if (trackballEnable)
-        mouseDifferent = mouseCurrent - mouseLast;
-
-    camera.processTrackball(mouseDifferent.x, mouseDifferent.y);
-}
-
-void processCompareBarMove(GLFWwindow *window)
-{   
-    if (!compareBarMoveEnable)
-        return;
-    double x, y;
-    glfwGetCursorPos(window, &x, &y); 
-    
-    if (x > 30 && x < frameWidth - 30)
-        compareBarX = x;
-}
-
-void processMagnifierResize(GLFWwindow *window)
-{   
-    if (!magnifierResizeEnable)
-        return;
-    double x, y;
-    glfwGetCursorPos(window, &x, &y); 
-    
-    // cout << "DEBUG::MAIN::PMR:1" << endl;
-    if (y > 30 && y < frameHeight - 30 && magnifierCenter.y - (frameHeight - y) > 30.0f)
     {
-        // cout << "DEBUG::MAIN::PMR:2" << endl;
-        magnifierRadius = magnifierCenter.y - (frameHeight - y);
+        vec2 mouseDifferent = vec2(0.0f, 0.0f);
+        mouseDifferent = mouseCurrent - mouseLast;
+        camera.processTrackball(mouseDifferent.x, mouseDifferent.y);
+        setGUICameraStatus(camera);
     }
-}
 
-void processMagnifierMove(GLFWwindow *window)
-{   
-    if (!magnifierMoveEnable)
-        return;
-    double x, y;
-    glfwGetCursorPos(window, &x, &y); 
-
-    if (x > 30 && x < frameWidth - 30 && y > 30 && y < frameHeight - 30)
-        magnifierCenter = vec2(x, frameHeight - y) + magnifierMoveOffset;
 }
 
 void updateFrameVariable(Frame& frame)
@@ -162,10 +139,6 @@ void updateFrameVariable(Frame& frame)
     frame.setTestMode(testMode);
     frame.setFilterMode(filterMode);
     frame.setFrameSize(frameWidth, frameHeight);
-    frame.setCompareBarEnable(compareBarEnable);
-    frame.setCompareBarX(compareBarX);
-    frame.setMagnifierCeanter(magnifierCenter);
-    frame.setMagnifierRadius(magnifierRadius);
     if (needUpdateFBO)
     {
         frame.updateFrameBufferObject();
@@ -182,13 +155,15 @@ void display(Shader& shader, Camera& camera)
     projection = camera.getPerspective();
     view = camera.getView();
     shader.setMat4("um4p", projection);
-    shader.setMat4("um4mv", view);
+    shader.setMat4("um4v", view);
+    shader.setMat4("um4m", mat4(1.0f));
     shader.setInt("outputMode", outputMode);
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
 
     for (auto& it : models)
     {
-        shader.setMat4("um4mv", view * it.getModelMatrix());
+        shader.setMat4("um4v", view);
+        shader.setMat4("um4m", it.getModelMatrix());
         it.draw(shader);
     }
 }
@@ -215,8 +190,6 @@ void windowUpdate(Shader& frameShader, Shader& shader, Camera& camera, Frame& fr
 void reshapeResponse(GLFWwindow *window, int width, int height)
 {
 	glViewport(0, 0, width, height);
-    compareBarX = compareBarX / frameWidth * width;
-    magnifierCenter = magnifierCenter / vec2(frameWidth, frameHeight) * vec2(width, height);
     frameWidth = guiMenuWidth = width;
     frameHeight = height;
     needUpdateFBO = true;
@@ -261,36 +234,9 @@ void mouseResponse(GLFWwindow *window, int button, int action, int mods)
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
         if (action == GLFW_PRESS) {
-            if (filterMode == 3)
-            {
-                // cout <<"DEBUG::MAIN::MR::3: " << length(vec2(x,frameHeight - y) - magnifierCenter) << " " << length(vec2(x,frameHeight - y) - (magnifierCenter - vec2(0.0f, magnifierRadius + 1))) << endl;
-                if(length(vec2(x,frameHeight - y) - (magnifierCenter - vec2(0.0f, magnifierRadius + 1))) < 8)
-                {
-                    cout <<"DEBUG::MAIN::MR::magnifierResizeEnabled" << endl;
-                    magnifierResizeEnable = true;
-                }
-                else if (length(vec2(x,frameHeight - y) - magnifierCenter) < magnifierRadius)
-                {
-                    cout <<"DEBUG::MAIN::MR::magnifierMoveEnabled" << endl;
-                    magnifierMoveEnable = true;
-                    magnifierMoveOffset = magnifierCenter - vec2(x,frameHeight - y);
-                }
-            }
-            else if (compareBarEnable && filterMode != 0)
-            {
-                cout <<"DEBUG::MAIN::MR::1:" << x - compareBarX << " " << y - (frameHeight / 2.0f - 5.0f) << endl;
-                if(abs(x - compareBarX) <= 6 && abs(frameHeight - y - (0.5f * frameHeight)) <= 20)
-                {
-                    cout <<"DEBUG::MAIN::MR::compareBarEnabled" << endl;
-                    compareBarMoveEnable = true;
-                }
-            }
             printf("Mouse %d is pressed at (%f, %f)\n", button, x, y);
         }
         else if (action == GLFW_RELEASE) {
-            compareBarMoveEnable = false;
-            magnifierResizeEnable = false;
-            magnifierMoveEnable = false;
             printf("Mouse %d is released at (%f, %f)\n", button, x, y);
         }
     }
@@ -307,7 +253,9 @@ void mouseResponse(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-void guiMenu()
+
+
+void guiMenu(Camera& camera)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -315,104 +263,34 @@ void guiMenu()
 
     ImGui::SetNextWindowSize(ImVec2(guiMenuWidth + 2, 0));
     ImGui::SetNextWindowPos(ImVec2(-1, 0));
-    ImGui::Begin("Menu", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_MenuBar);
-    if (ImGui::BeginMenuBar())
+    ImGui::Begin("Menu", NULL, 
+        ImGuiWindowFlags_NoTitleBar | 
+        // ImGuiWindowFlags_NoBringToFrontOnFocus | 
+        // ImGuiWindowFlags_NoBackground | 
+        ImGuiWindowFlags_NoMove | 
+        ImGuiWindowFlags_NoResize
+        // ImGuiWindowFlags_MenuBar
+    );
+
+    ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
+
+    ImGui::Text("Eye Position:");
+    ImGui::SameLine(100);
+    ImGui::PushItemWidth(240);
+    ImGui::InputFloat3("##Eye Position", cameraPosition);
+    ImGui::PopItemWidth();
+    ImGui::SameLine(350);
+    ImGui::Text("Look-at Center:");
+    ImGui::SameLine(450);
+    ImGui::PushItemWidth(240);
+    ImGui::InputFloat3("##look-at center", cameraLookAt);
+    ImGui::PopItemWidth();
+    ImGui::SameLine(700);
+    if (ImGui::Button("Enter"))
     {
-        if (ImGui::BeginMenu("OutputMode"))
-        {
-            if (outputMode == 0)
-            {
-                ImGui::TextDisabled("＞　Diffuse Texture");
-                if (ImGui::MenuItem("　　Normal Vector"))
-                {
-                    outputMode = 1;
-                }
-            }
-            else
-            {
-                if (ImGui::MenuItem("　　Diffuse Texture"))
-                {
-                    outputMode = 0;
-                }
-                ImGui::TextDisabled("＞　Normal Vector");
-            }
-            ImGui::EndMenu();
-        }
-        // if (ImGui::BeginMenu("FrameFilter"))
-        // {
-        //     for (int i = 0; i < 1; ++i)
-        //     {
-        //         if (filterMode == i)
-        //         {
-        //             ImGui::TextDisabled("%s", ("＞　" + string(filterTypes[i])).c_str());
-        //         }
-        //         else if (ImGui::MenuItem(("　　" + string(filterTypes[i])).c_str()))
-        //         {
-        //             filterMode = i;
-        //         }
-        //     }
-        //     ImGui::EndMenu();
-        // }
-        // if (ImGui::BeginMenu("CompareBar"))
-        // {
-        //     if (!compareBarEnable)
-        //     {
-        //         ImGui::TextDisabled("＞　Disabled");
-        //         if (ImGui::MenuItem("　　Enable"))
-        //         {
-        //             compareBarEnable = true;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         if (ImGui::MenuItem("　　Disable"))
-        //         {
-        //             compareBarEnable = false;
-        //         }
-        //         ImGui::TextDisabled("＞　Enabled");
-        //     }
-        //     ImGui::EndMenu();
-        // }
-        if (ImGui::BeginMenu("Normal Mapping"))
-        {
-            if (!normalMappingEnabled)
-            {
-                ImGui::TextDisabled("＞　Disabled");
-                if (ImGui::MenuItem("　　Enable"))
-                {
-                    normalMappingEnabled = true;
-                }
-            }
-            else
-            {
-                if (ImGui::MenuItem("　　Disable"))
-                {
-                    normalMappingEnabled = false;
-                }
-                ImGui::TextDisabled("＞　Enabled");
-            }
-            ImGui::EndMenu();
-        }
-        if (ImGui::BeginMenu("ControlHelp"))
-        {
-            ImGui::Text("　Keyboard:　");
-            ImGui::Text("　　　W/A/S/D:　");
-            ImGui::Text("　　　　　 Move forward/left/backward/right　");
-            ImGui::Text("　　　Z/X:　");
-            ImGui::Text("　　　　　Adjust the eye height up/down　");
-            ImGui::Text("　Mouse:　");
-            // ImGui::Text("　　　Right button:　");
-            // ImGui::Text("　　　　　Click menu and control compare-bar/magnifier　");
-            // ImGui::Text("　　　　　Compare-bar:　");
-            // ImGui::Text("　　　　　　　Drag the grey bar to adjust the position　");
-            // ImGui::Text("　　　　　Magnifier:　");
-            // ImGui::Text("　　　　　　　Drag the grey dot to resize magnifier　");
-            // ImGui::Text("　　　　　　　Drag the inside to adjust the position　");
-            ImGui::Text("　　　Middle button:　");
-            ImGui::Text("　　　　　track ball");
-            ImGui::EndMenu();
-        }     
-        ImGui::EndMenuBar();
+        cout << "DEBUG::MAIN::GUIM::sent Pos" << endl;
+        camera.setPosition(vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]));
+        camera.setLookAt(vec3(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]));
     }
 
     ImGui::End();
@@ -433,7 +311,7 @@ int main(int argc, char **argv)
     // initial glfw
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // specifies whether to use full resolution framebuffers on Retina displays
@@ -463,6 +341,8 @@ int main(int argc, char **argv)
                         .withFar(5000.0f)
                         .withMoveSpeed(3.0f)
                         .withTheta(180.0f);
+    setGUICameraStatus(camera);
+
     cout << "DEBUG::MAIN::C-CAMERA-F-GV: " << camera.front.x << " " << camera.front.y << " " << camera.front.z << endl;
     Frame frame = Frame();
     initialization(window);
@@ -485,11 +365,8 @@ int main(int argc, char **argv)
 
         processCameraMove(camera);
         processCameraTrackball(camera, window);
-        processCompareBarMove(window);
-        processMagnifierResize(window);
-        processMagnifierMove(window);
         windowUpdate(frameShader, shader, camera, frame);
-        guiMenu();
+        guiMenu(camera);
 
         // swap buffer from back to front
         glfwSwapBuffers(window);

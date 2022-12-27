@@ -80,26 +80,6 @@ public:
         frameHeight = height;
     }
 
-    void setCompareBarEnable(bool val)
-    {
-        compareBarEnbale = val;
-    }
-
-    void setCompareBarX(float val)
-    {
-        compareBarX = val;
-    }
-
-    void setMagnifierCeanter(vec2 val)
-    {
-        magnifierCenter = val;
-    }
-
-    void setMagnifierRadius(float val)
-    {
-        magnifierRadius = val;
-    }
-
     void updateFrameBufferObject()
     {
         glGenFramebuffers(1, &FBO);
@@ -129,24 +109,14 @@ private:
     int filterMode = 0;
     int testMode = 0;
 
-    float compareBarX = (float)INIT_WIDTH / 2;
-    bool compareBarEnbale = false;
-
-    vec2 magnifierCenter = vec2(frameWidth, frameHeight) / 2.0f;
-    float magnifierRadius = 70.0f;
-
     void setupShaderUniform(Shader& shader)
     {
         timerCounter = (timerCounter + 1) % 180;
         shader.setInt("timer", timerCounter);
         shader.setInt("testMode", testMode);
         shader.setInt("filterMode", filterMode);
-        shader.setBool("compareBarEnable", compareBarEnbale);
-        shader.setFloat("compareBarX", compareBarX);
         shader.setVec2("textureSizeReciprocal", 1.0f / (float)frameWidth, 1.0f / (float)frameHeight);
         shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
-        shader.setVec2("magnifierCenter", magnifierCenter.x, magnifierCenter.y);
-        shader.setFloat("magnifierRadius", magnifierRadius);
         // cout << "DEBUG::FRAME::DRAW: " << timerCounter << endl;
         // cout << "DEBUG::FRAME::DRAW: " << frameWidth << " " << frameHeight << endl;
     }

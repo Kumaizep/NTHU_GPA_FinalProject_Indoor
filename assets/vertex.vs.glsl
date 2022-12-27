@@ -1,4 +1,4 @@
-#version 460
+#version 450
 
 layout(location = 0) in vec3 iv3vertex;
 layout(location = 1) in vec3 iv3normal;
@@ -6,7 +6,8 @@ layout(location = 2) in vec2 iv2tex_coord;
 layout(location = 3) in vec3 iv3tangent;
 layout(location = 4) in vec3 iv3bitangent;
 
-uniform mat4 um4mv;
+uniform mat4 um4v;
+uniform mat4 um4m;
 uniform mat4 um4p;
 
 out VertexData
@@ -22,12 +23,13 @@ out VertexData
 
 void main()
 {
-    vec4 P = um4mv * vec4(iv3vertex, 1.0);
+    vec4 P = um4v * um4m * vec4(iv3vertex, 1.0);
+    vec4 LW = um4v * vec4(-2.845, 2.028, -1.293, 1.0);
     // Eye space to tangent space TBN
-    vec3 T = normalize(mat3(um4mv) * iv3tangent);
-    vec3 N = normalize(mat3(um4mv) * iv3normal);
+    vec3 T = normalize(mat3(um4v * um4m) * iv3tangent);
+    vec3 N = normalize(mat3(um4v * um4m) * iv3normal);
     vec3 B = cross(N, T);
-    vec3 L = vec3(-2.845, 2.028, -1.293) - P.xyz;
+    vec3 L = LW.xyz - P.xyz;
     vec3 V = -P.xyz;
 
     vec3 TBNL = normalize(vec3(dot(L, T), dot(L, B), dot(L, N)));
