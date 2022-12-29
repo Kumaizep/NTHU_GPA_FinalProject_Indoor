@@ -41,6 +41,7 @@ bool normalMappingEnabled = false;
 bool needUpdateFBO = false;
 
 vector<Model> models;
+vector<Model> lights;
 
 const char* filterTypes[] = {
     "Default",
@@ -70,6 +71,10 @@ void initialization(GLFWwindow *window)
     models.push_back(Model("assets/indoor/trice.obj")
                         .withPosition(vec3(2.05, 0.628725, -1.9))
                         .withScale(vec3(0.001, 0.001, 0.001)));
+
+    lights.push_back(Model("assets/indoor/Sphere.obj")
+                        .withPosition(vec3(1.87659, 0.4625 , 0.103928))
+                        .withScale(vec3(0.22, 0.22, 0.22)));
 
     timerLast = glfwGetTime();
     mouseLast = vec2(0.0f, 0.0f);   
@@ -136,7 +141,7 @@ void processCameraTrackball(Camera& camera, GLFWwindow *window)
 
 }
 
-void updateFrameVariable(Frame& frame)
+bool updateFrameVariable(Frame& frame)
 {
     frame.setTestMode(testMode);
     frame.setFilterMode(filterMode);
@@ -145,7 +150,9 @@ void updateFrameVariable(Frame& frame)
     {
         frame.updateFrameBufferObject();
         needUpdateFBO = false;
+        return true;
     }
+    return false;
 }
 
 void display(Shader& shader, Camera& camera)
@@ -162,17 +169,33 @@ void display(Shader& shader, Camera& camera)
     shader.setInt("outputMode", outputMode);
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
 
+    vec4 lightpos = view * vec4(1.87659f, 0.4625f , 0.103928f,1);
+
+    shader.setVec3("pointlight.position", vec3(lightpos));
+    shader.setFloat("pointlight.constant",1.0f);
+    shader.setFloat("pointlight.linear",0.7f);
+    shader.setFloat("pointlight.quadratic",0.14f);
+
+    shader.setBool("lightMode", 0);
     for (auto& it : models)
     {
-        shader.setMat4("um4v", view);
+        shader.setMat4("um4m", it.getModelMatrix());
+        it.draw(shader);
+    }
+    shader.setBool("lightMode", 1);
+    for (auto& it : lights)
+    {
         shader.setMat4("um4m", it.getModelMatrix());
         it.draw(shader);
     }
 }
 
-void windowUpdate(Shader& frameShader, Shader& shader, Camera& camera, Frame& frame)
+void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Camera& camera, Frame& frame, Frame& bloom)
 {
-    updateFrameVariable(frame);
+    if(updateFrameVariable(frame)){
+        needUpdateFBO = true;
+        updateFrameVariable(bloom);
+    }
 
     // Update to Frame buffer
     glBindFramebuffer(GL_FRAMEBUFFER, frame.FBO);
@@ -182,10 +205,19 @@ void windowUpdate(Shader& frameShader, Shader& shader, Camera& camera, Frame& fr
     display(shader, camera);
 
     // Update to window
+    glBindFramebuffer(GL_FRAMEBUFFER, bloom.FBO); // back to default
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    frame.draw(bloomShader);
+
+    // Update to window
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, bloom.FBT);
     frame.draw(frameShader);
 }
 
@@ -337,6 +369,7 @@ int main(int argc, char **argv)
 
     dumpInfo();
     Shader shader("assets/vertex.vs.glsl", "assets/fragment.fs.glsl");
+    Shader bloomShader("assets/bloomVertex.vs.glsl", "assets/bloomFragment.fs.glsl");
     Shader frameShader("assets/frameVertex.vs.glsl", "assets/frameFragment.fs.glsl");
     Camera camera = Camera()
                         .withPosition(vec3(4.0f, 1.0f, -1.5f))
@@ -346,6 +379,7 @@ int main(int argc, char **argv)
     setGUICameraStatus(camera);
 
     cout << "DEBUG::MAIN::C-CAMERA-F-GV: " << camera.front.x << " " << camera.front.y << " " << camera.front.z << endl;
+    Frame bloom = Frame();
     Frame frame = Frame();
     initialization(window);
 
@@ -367,7 +401,7 @@ int main(int argc, char **argv)
 
         processCameraMove(camera);
         processCameraTrackball(camera, window);
-        windowUpdate(frameShader, shader, camera, frame);
+        windowUpdate(frameShader, bloomShader, shader, camera, frame, bloom);
         guiMenu(camera);
 
         // swap buffer from back to front

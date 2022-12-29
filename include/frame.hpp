@@ -19,6 +19,7 @@ class Frame
 {
 public:
     GLuint FBO;
+    
 
     Frame()
     {
@@ -97,8 +98,8 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-private:
     GLuint FBT;
+private:
     GLuint quadVAO;
     vector<Texture> filterTextures;
 
