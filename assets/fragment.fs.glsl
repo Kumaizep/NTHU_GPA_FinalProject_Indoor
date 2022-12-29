@@ -13,6 +13,9 @@ in VertexData
 	vec3 TBNL;
     vec3 TBNH;
     vec3 TBNV;
+
+    vec3 T;
+    vec3 B;
 } vertexData;
 
 const vec3 Ia = vec3(0.1, 0.1, 0.1);
@@ -81,8 +84,10 @@ vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
     float distance    = length(light.position - P);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * pow(distance, 2));
 	
-    vec3 H = normalize(lightDir + vertexData.TBNV);
-    return blinnPhong(Kdiffuse, N, lightDir, H) * attenuation;
+    vec3 TBNL = normalize(vec3(dot(lightDir, vertexData.T), dot(lightDir, vertexData.B), dot(lightDir, vertexData.N)));
+    vec3 H = normalize(TBNL + vertexData.TBNV);
+
+    return blinnPhong(Kdiffuse, N, TBNL, H) * attenuation;
 }
 
 void main()
@@ -117,7 +122,7 @@ void main()
 		{
 			vec3 N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
 			fragColor = blinnPhong(Kd, N, vertexData.TBNL, vertexData.TBNH);
-			fragColor += CalcPointLight(Kd, N, pointlight, vertexData.P);
+			fragColor += CalcPointLightNormalMap(Kd, N, pointlight, vertexData.P);
 		}
 		else
 		{

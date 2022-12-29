@@ -21,6 +21,9 @@ out VertexData
     vec3 TBNL;
     vec3 TBNH;
     vec3 TBNV;
+
+    vec3 T;
+    vec3 B;
 } vertexData;
 
 void main()
@@ -46,6 +49,9 @@ void main()
     vertexData.P = P.xyz;
     vertexData.texcoord = iv2tex_coord;
     vertexData.normal = iv3normal;
+
+    vertexData.T = T;
+    vertexData.B = B;
 
     gl_Position = um4p * P;
 }
