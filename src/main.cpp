@@ -8,19 +8,15 @@
 mat4 view(1.0f);                    // V of MVP, viewing matrix
 mat4 projection(1.0f);              // P of MVP, projection matrix
 
-GLint um4p;
-GLint um4mv;
-GLint tex;
-
-GLubyte timerCounter = 0;
-bool timerEnabled = true;
 float timerCurrent = 0.0f;
 float timerLast = 0.0f;
 unsigned int timerSpeed = 16;
 
+// Keyboard control
 bool keyPressing[400] = {0};
 float keyPressTime[400] = {0.0f};
 
+// Mouse control
 bool trackballEnable = false;
 vec2 mouseCurrent = vec2(0.0f, 0.0f);
 vec2 mouseLast = vec2(0.0f, 0.0f);
@@ -43,16 +39,6 @@ bool needUpdateFBO = false;
 
 vector<Model> models;
 vector<Model> lights;
-
-const char* filterTypes[] = {
-    "Default",
-    "Image Abstraction",
-    "Watercolor",
-    "Magnifier", 
-    "Bloom Effect", 
-    "Pixelization", 
-    "Sine Wave"
-};
 
 void initialization(GLFWwindow *window)
 {
@@ -107,9 +93,7 @@ void processCameraMoveWithDirection(Camera& camera, MoveDirection moveDirction, 
 
 void processCameraMove(Camera& camera)
 {
-    float timeDifferent = 0.0f;
-    if (timerEnabled)
-        timeDifferent = timerCurrent - timerLast;
+    float timeDifferent = timerCurrent - timerLast;
 
     if (keyPressing[GLFW_KEY_W])
         processCameraMoveWithDirection(camera, FORWARD, timeDifferent);
@@ -150,7 +134,6 @@ void setupFrameShaderUniform(Shader& shader)
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
     shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
     // cout << "DEBUG::MAIN::SFSU:effectTestMode " << (effectTestMode? 1.0 : 0.5) << endl;
-    // cout << "DEBUG::FRAME::DRAW: " << frameWidth << " " << frameHeight << endl;
 }
 
 void updateFrameVariable(Frame& frame)
@@ -161,8 +144,6 @@ void updateFrameVariable(Frame& frame)
 
 void display(Shader& shader, Camera& camera)
 {
-    if (timerEnabled) timerCounter += 1.0f;
-
     shader.use();
 
     projection = camera.getPerspective();
@@ -201,7 +182,10 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
 {
     if(needUpdateFBO){
         updateFrameVariable(frame);
+        // TAG: Merge bloom frame shader
+        // ================================================================
         // updateFrameVariable(bloom);
+        // ================================================================
         needUpdateFBO = false;
     }
 
@@ -212,7 +196,9 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
     glEnable(GL_DEPTH_TEST);
     display(shader, camera);
 
-    // // Draw frame with bloomShader to bloom.FBO
+    // TAG: Merge bloom frame shader
+    // ================================================================
+    // Draw frame with bloomShader to bloom.FBO
     // glBindFramebuffer(GL_FRAMEBUFFER, bloom.FBO); // back to default
     // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     // glClear(GL_COLOR_BUFFER_BIT);
@@ -220,6 +206,7 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
     // bloomShader.use();
     // setupFrameShaderUniform(bloomShader);
     // frame.draw(bloomShader);
+    // ================================================================
 
     // Draw frame with frameShader to window
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
@@ -227,8 +214,11 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     frameShader.use();
-    // glActiveTexture(GL_TEXTURE2);
+    // TAG: Merge bloom frame shader
+    // ================================================================
+    // glActiveTexture(GL_TEXTURE7);
     // glBindTexture(GL_TEXTURE_2D, bloom.FBT);
+    // ================================================================
     setupFrameShaderUniform(frameShader);
     frame.draw(frameShader);
 }
@@ -246,9 +236,6 @@ void keyboardResponse(GLFWwindow *window, int key, int scancode, int action, int
     switch (key) {
         case GLFW_KEY_ESCAPE:
             glfwSetWindowShouldClose(window, true);
-            break;
-        case GLFW_KEY_T:
-            if (action == GLFW_PRESS) timerEnabled = !timerEnabled;
             break;
         case GLFW_KEY_D:
         case GLFW_KEY_A:

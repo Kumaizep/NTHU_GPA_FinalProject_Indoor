@@ -10,6 +10,8 @@ layout(binding = 3) uniform sampler2D texture3; // ambient color map
 layout(binding = 4) uniform sampler2D texture4; // diffuse color map
 layout(binding = 5) uniform sampler2D texture5; // specular color map
 layout(binding = 6) uniform sampler2D texture6; // world space tangent
+layout(binding = 7) uniform sampler2D texture7; // Reserve for bloom
+
 
 uniform vec2 frameSize;
 uniform int gBufferMode;
@@ -44,8 +46,11 @@ vec4 blurHDR()
 		for (int j = 0; j < 5; ++j)
 		{
 			vec2 tc = texCoords + vec2(float(i - 2), float(j - 2))/frameSize;
-			sum += coeffs[i] * coeffs[j] * blurHDRColor(tc);
-
+            // TAG: Merge bloom frame shader
+            // ================================================================
+            sum += coeffs[i] * coeffs[j] * blurHDRColor(tc);
+			// sum += coeffs[i] * coeffs[j] * texture(texture7, tc);
+            // ================================================================
 		}
 	return sum;
 }
