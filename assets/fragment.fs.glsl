@@ -117,7 +117,7 @@ void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, PointLight light)
 
 		if (bloomEffectEnabled)
 		{
-			if (haveMapHeight == 1)
+			if (haveMapHeight == 1 && normalMappingEnabled)
 			{
 				fragColor += CalcPointLightNormalMap(Kdiffuse, N, pointlight, P);
 			}
@@ -132,6 +132,9 @@ void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, PointLight light)
 void main()
 {
 	vec4 Kdiffuse = vec4(Kd, 0.0);
+	vec3 N = vertexData.N;
+	vec3 L = vertexData.L;
+	vec3 H = vertexData.H;
 
 	if(lightMode)
 	{
@@ -152,20 +155,15 @@ void main()
 		{
 			discard;
 		}
-		else
-		{
-			mixDraw(Kdiffuse.rgb, vertexData.N, vertexData.L, vertexData.H, vertexData.P, pointlight);
-		}
 	}
 	else if (haveMapHeight == 1 && normalMappingEnabled)
 	{
-		vec3 N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
-		mixDraw(Kd, N, vertexData.TBNL, vertexData.TBNH, vertexData.P, pointlight);
+		N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
+		L = vertexData.TBNL;
+		H = vertexData.TBNH;
 	}
-	else
-	{
-		mixDraw(Kd, vertexData.N, vertexData.L, vertexData.H, vertexData.P, pointlight);
-	}
+	
+	mixDraw(Kdiffuse.rgb, N, L, H, vertexData.P, pointlight);
 
 	color1 = vec4(vertexData.worldPosition, Ns);
 	color2 = vec4(vertexData.normal, 0.0);

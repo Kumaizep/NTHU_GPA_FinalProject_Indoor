@@ -127,8 +127,10 @@ void processCameraTrackball(Camera& camera, GLFWwindow *window)
 
 }
 
-void setupFrameShaderUniform(Shader& shader)
+void setupFrameShaderUniform(Shader& shader, Camera& camera)
 {
+    shader.setMat4("um4v", view);
+
     shader.setInt("gBufferMode", gBufferMode);
     shader.setBool("effectTestMode", effectTestMode);
     // shader.setBool("effectTestMode2", effectTestMode2);
@@ -221,7 +223,7 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
     // glActiveTexture(GL_TEXTURE7);
     // glBindTexture(GL_TEXTURE_2D, bloom.FBT);
     // ================================================================
-    setupFrameShaderUniform(frameShader);
+    setupFrameShaderUniform(frameShader, camera);
     frame.draw(frameShader);
 }
 

@@ -99,10 +99,7 @@ void blinnPhong()
     vec3 H = normalize(L + normalize(V));
 
     float Ns = texture(texture1, texCoords).w;
-    blinnPhongColor(N, L, H, 10);
-
-    // fragColor = texture(texture6, texCoords);
-    // fragColor = vec4(1.0);
+    blinnPhongColor(N, L, H, Ns);
 }
 
 void gBufferDraw()
