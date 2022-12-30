@@ -29,18 +29,20 @@ int guiMenuWidth = INIT_WIDTH;
 int frameWidth = INIT_WIDTH;
 int frameHeight = INIT_HEIGHT;
 
-int outputMode = 0;
-int filterMode = 0;
-int testMode = 0;
-
 float cameraPosition[] = {1.0, 1.0, 1.0};
 float cameraLookAt[] = {1.0, 1.0, 1.0};
 
+int gBufferMode = 0;
+bool effectTestMode = false;
+bool effectTestMode2 = false;
+
 bool normalMappingEnabled = false;
+bool bloomEffectEnabled = false;
 
 bool needUpdateFBO = false;
 
 vector<Model> models;
+vector<Model> lights;
 
 const char* filterTypes[] = {
     "Default",
@@ -70,6 +72,10 @@ void initialization(GLFWwindow *window)
     models.push_back(Model("assets/indoor/trice.obj")
                         .withPosition(vec3(2.05, 0.628725, -1.9))
                         .withScale(vec3(0.001, 0.001, 0.001)));
+
+    lights.push_back(Model("assets/indoor/Sphere.obj")
+                        .withPosition(vec3(1.87659, 0.4625 , 0.103928))
+                        .withScale(vec3(0.22, 0.22, 0.22)));
 
     timerLast = glfwGetTime();
     mouseLast = vec2(0.0f, 0.0f);   
@@ -136,16 +142,21 @@ void processCameraTrackball(Camera& camera, GLFWwindow *window)
 
 }
 
+void setupFrameShaderUniform(Shader& shader)
+{
+    shader.setInt("gBufferMode", gBufferMode);
+    shader.setBool("effectTestMode", effectTestMode);
+    // shader.setBool("effectTestMode2", effectTestMode2);
+    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
+    shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
+    // cout << "DEBUG::MAIN::SFSU:effectTestMode " << (effectTestMode? 1.0 : 0.5) << endl;
+    // cout << "DEBUG::FRAME::DRAW: " << frameWidth << " " << frameHeight << endl;
+}
+
 void updateFrameVariable(Frame& frame)
 {
-    frame.setTestMode(testMode);
-    frame.setFilterMode(filterMode);
     frame.setFrameSize(frameWidth, frameHeight);
-    if (needUpdateFBO)
-    {
-        frame.updateFrameBufferObject();
-        needUpdateFBO = false;
-    }
+    frame.updateFrameBufferObject();
 }
 
 void display(Shader& shader, Camera& camera)
@@ -159,33 +170,66 @@ void display(Shader& shader, Camera& camera)
     shader.setMat4("um4p", projection);
     shader.setMat4("um4v", view);
     shader.setMat4("um4m", mat4(1.0f));
-    shader.setInt("outputMode", outputMode);
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
+    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
 
+    vec4 lightpos = view * vec4(1.87659f, 0.4625f , 0.103928f,1);
+
+    shader.setVec3("pointlight.position", vec3(lightpos));
+    shader.setFloat("pointlight.constant",1.0f);
+    shader.setFloat("pointlight.linear",0.7f);
+    shader.setFloat("pointlight.quadratic",0.14f);
+
+    shader.setBool("lightMode", 0);
     for (auto& it : models)
     {
-        shader.setMat4("um4v", view);
         shader.setMat4("um4m", it.getModelMatrix());
         it.draw(shader);
     }
+    if (bloomEffectEnabled)
+    {
+        shader.setBool("lightMode", 1);
+        for (auto& it : lights)
+        {
+            shader.setMat4("um4m", it.getModelMatrix());
+            it.draw(shader);
+        }
+    }
 }
 
-void windowUpdate(Shader& frameShader, Shader& shader, Camera& camera, Frame& frame)
+void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Camera& camera, Frame& frame, Frame& bloom)
 {
-    updateFrameVariable(frame);
+    if(needUpdateFBO){
+        updateFrameVariable(frame);
+        // updateFrameVariable(bloom);
+        needUpdateFBO = false;
+    }
 
-    // Update to Frame buffer
+    // Draw scene to frame.FBO
     glBindFramebuffer(GL_FRAMEBUFFER, frame.FBO);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // We're not using stencil buffer now
     glEnable(GL_DEPTH_TEST);
     display(shader, camera);
 
-    // Update to window
+    // // Draw frame with bloomShader to bloom.FBO
+    // glBindFramebuffer(GL_FRAMEBUFFER, bloom.FBO); // back to default
+    // glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    // glClear(GL_COLOR_BUFFER_BIT);
+    // glDisable(GL_DEPTH_TEST);
+    // bloomShader.use();
+    // setupFrameShaderUniform(bloomShader);
+    // frame.draw(bloomShader);
+
+    // Draw frame with frameShader to window
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
+    frameShader.use();
+    // glActiveTexture(GL_TEXTURE2);
+    // glBindTexture(GL_TEXTURE_2D, bloom.FBT);
+    setupFrameShaderUniform(frameShader);
     frame.draw(frameShader);
 }
 
@@ -205,9 +249,6 @@ void keyboardResponse(GLFWwindow *window, int key, int scancode, int action, int
             break;
         case GLFW_KEY_T:
             if (action == GLFW_PRESS) timerEnabled = !timerEnabled;
-            break;
-        case GLFW_KEY_G:
-            if (action == GLFW_PRESS) testMode = (testMode + 1) % 2;
             break;
         case GLFW_KEY_D:
         case GLFW_KEY_A:
@@ -255,8 +296,6 @@ void mouseResponse(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-
-
 void guiMenu(Camera& camera)
 {
     ImGui_ImplOpenGL3_NewFrame();
@@ -275,6 +314,12 @@ void guiMenu(Camera& camera)
     );
 
     ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
+    ImGui::SameLine();
+    ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
+    ImGui::SameLine();
+    ImGui::Checkbox("Test Mode", &effectTestMode);
+    // ImGui::SameLine();
+    // ImGui::Checkbox("Test Mode2", &effectTestMode2);
 
     ImGui::Text("Eye Position:");
     ImGui::SameLine(100);
@@ -294,6 +339,22 @@ void guiMenu(Camera& camera)
         camera.setPosition(vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]));
         camera.setLookAt(vec3(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]));
     }
+
+    ImGui::Text("G-bufferMode:");
+    ImGui::SameLine();
+    ImGui::RadioButton("Default", &gBufferMode, 0);
+    ImGui::SameLine();
+    ImGui::RadioButton("Vertex", &gBufferMode, 1);
+    ImGui::SameLine();
+    ImGui::RadioButton("Normal", &gBufferMode, 2);
+    ImGui::SameLine();
+    ImGui::RadioButton("Ambient", &gBufferMode, 3);
+    ImGui::SameLine();
+    ImGui::RadioButton("Diffuse", &gBufferMode, 4);
+    ImGui::SameLine();
+    ImGui::RadioButton("Specular", &gBufferMode, 5);
+    ImGui::SameLine();
+    ImGui::RadioButton("Test", &gBufferMode, 6);
 
     ImGui::End();
 
@@ -337,6 +398,7 @@ int main(int argc, char **argv)
 
     dumpInfo();
     Shader shader("assets/vertex.vs.glsl", "assets/fragment.fs.glsl");
+    Shader bloomShader("assets/bloomVertex.vs.glsl", "assets/bloomFragment.fs.glsl");
     Shader frameShader("assets/frameVertex.vs.glsl", "assets/frameFragment.fs.glsl");
     Camera camera = Camera()
                         .withPosition(vec3(4.0f, 1.0f, -1.5f))
@@ -346,6 +408,7 @@ int main(int argc, char **argv)
     setGUICameraStatus(camera);
 
     cout << "DEBUG::MAIN::C-CAMERA-F-GV: " << camera.front.x << " " << camera.front.y << " " << camera.front.z << endl;
+    Frame bloom = Frame();
     Frame frame = Frame();
     initialization(window);
 
@@ -367,7 +430,7 @@ int main(int argc, char **argv)
 
         processCameraMove(camera);
         processCameraTrackball(camera, window);
-        windowUpdate(frameShader, shader, camera, frame);
+        windowUpdate(frameShader, bloomShader, shader, camera, frame, bloom);
         guiMenu(camera);
 
         // swap buffer from back to front

@@ -15,10 +15,19 @@ out VertexData
     vec3 N; // eye space normal
     vec3 L; // eye space light vector
     vec3 H; // eye space halfway vector
-    vec3 normal;
-    vec2 texcoord;
+	vec3 P; // eye space position
+    vec3 T;
+    vec3 B;
+
     vec3 TBNL;
     vec3 TBNH;
+    vec3 TBNV;
+
+    vec3 worldPosition;
+    vec3 normal;
+    vec2 texcoord;
+    vec3 tangent;
+    vec3 bitangent;
 } vertexData;
 
 void main()
@@ -35,13 +44,21 @@ void main()
     vec3 TBNL = normalize(vec3(dot(L, T), dot(L, B), dot(L, N)));
     vec3 TBNV = normalize(vec3(dot(V, T), dot(V, B), dot(V, N)));
     vertexData.TBNL = TBNL;
+    vertexData.TBNV = TBNV;
     vertexData.TBNH = normalize(TBNL + TBNV);
 
     vertexData.L = normalize(L);
     vertexData.H = normalize(vertexData.L + normalize(V));
     vertexData.N = N;
-    vertexData.texcoord = iv2tex_coord;
+    vertexData.P = P.xyz;
+    vertexData.T = T;
+    vertexData.B = B;
+    
+    vertexData.worldPosition = (um4m * vec4(iv3vertex, 1.0)).xyz;
     vertexData.normal = iv3normal;
+    vertexData.texcoord = iv2tex_coord;
+    vertexData.tangent = iv3tangent;
+    vertexData.bitangent = iv3bitangent;
 
     gl_Position = um4p * P;
 }

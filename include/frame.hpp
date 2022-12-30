@@ -5,6 +5,8 @@
 #include "texture.hpp"
 #include "shader.hpp"
 
+#define G_BUFFER_NUM 6
+
 const GLfloat quadVertices[] = {
         -1.0f,  1.0f,  0.0f, 1.0f,
         -1.0f, -1.0f,  0.0f, 0.0f,
@@ -19,6 +21,7 @@ class Frame
 {
 public:
     GLuint FBO;
+    
 
     Frame()
     {
@@ -26,6 +29,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
         
         createFrameTextureObject();
+        createGBufferTextureObject();
 
         createFrameRenderObject();
 
@@ -44,34 +48,20 @@ public:
 
     void draw(Shader& shader)
     {
-        shader.use();
-
-        setupShaderUniform(shader);
-
         glBindVertexArray(quadVAO);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, FBT);
-        int unit = 1;
-        for (auto& it: filterTextures) {
-            it.activeAndBind(shader, unit++);
+        for (int i = 0; i < G_BUFFER_NUM; ++i)
+        {
+            glActiveTexture(GL_TEXTURE0 + i + 1);
+            glBindTexture(GL_TEXTURE_2D, GBuffer[i]);
         }
+        // int unit = 1;
+        // for (auto& it: filterTextures) {
+        //     it.activeAndBind(shader, unit++);
+        // }
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
-    }
-
-    void setTimerCounter(int val)
-    {
-        timerCounter = val;
-    }
-
-    void setFilterMode(int val)
-    {
-        filterMode = val;
-    }
-
-    void setTestMode(int val)
-    {
-        testMode = val;
     }
 
     void setFrameSize(int width, int height)
@@ -86,6 +76,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
         
         createFrameTextureObject();
+        createGBufferTextureObject();
 
         createFrameRenderObject();
 
@@ -97,30 +88,15 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-private:
     GLuint FBT;
+private:
+    GLuint GBuffer[6];
     GLuint quadVAO;
     vector<Texture> filterTextures;
 
     int frameWidth = INIT_WIDTH;
     int frameHeight = INIT_HEIGHT;
     
-    int timerCounter = 0;
-    int filterMode = 0;
-    int testMode = 0;
-
-    void setupShaderUniform(Shader& shader)
-    {
-        timerCounter = (timerCounter + 1) % 180;
-        shader.setInt("timer", timerCounter);
-        shader.setInt("testMode", testMode);
-        shader.setInt("filterMode", filterMode);
-        shader.setVec2("textureSizeReciprocal", 1.0f / (float)frameWidth, 1.0f / (float)frameHeight);
-        shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
-        // cout << "DEBUG::FRAME::DRAW: " << timerCounter << endl;
-        // cout << "DEBUG::FRAME::DRAW: " << frameWidth << " " << frameHeight << endl;
-    }
-
     void createFrameTextureObject()
     {
         glGenTextures(1, &FBT);
@@ -132,12 +108,69 @@ private:
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FBT, 0);
     }
 
+    void createGBufferTextureObject()
+    {
+        glGenTextures(G_BUFFER_NUM, GBuffer);
+
+        // world space vertex
+        glBindTexture(GL_TEXTURE_2D, GBuffer[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, GBuffer[0], 0);
+
+        // world space normal
+        glBindTexture(GL_TEXTURE_2D, GBuffer[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, GBuffer[1], 0);
+
+        // ambient color map
+        glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, frameWidth, frameHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, GBuffer[2], 0);
+
+        // diffuse color map
+        glBindTexture(GL_TEXTURE_2D, GBuffer[3]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, frameWidth, frameHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, GBuffer[3], 0);
+        
+        // specular color map
+        glBindTexture(GL_TEXTURE_2D, GBuffer[4]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, frameWidth, frameHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, GBuffer[4], 0);
+
+        glBindTexture(GL_TEXTURE_2D, GBuffer[5]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D, GBuffer[5], 0);
+
+        GLuint attachments[G_BUFFER_NUM + 1] = { 
+            GL_COLOR_ATTACHMENT0,
+            GL_COLOR_ATTACHMENT1,
+            GL_COLOR_ATTACHMENT2, 
+            GL_COLOR_ATTACHMENT3,
+            GL_COLOR_ATTACHMENT4,
+            GL_COLOR_ATTACHMENT5,
+            GL_COLOR_ATTACHMENT6
+        };
+        glDrawBuffers(G_BUFFER_NUM + 1, attachments);
+    }
+
     void createFrameRenderObject()
     {
         GLuint rbo;
         glGenRenderbuffers(1, &rbo);
         glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, frameWidth, frameHeight);  
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH32F_STENCIL8, frameWidth, frameHeight);  
         glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
