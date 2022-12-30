@@ -32,6 +32,7 @@ int gBufferMode = 0;
 bool effectTestMode = false;
 bool effectTestMode2 = false;
 
+bool blinnPhongEnabled = false;
 bool normalMappingEnabled = false;
 bool bloomEffectEnabled = false;
 
@@ -151,6 +152,7 @@ void display(Shader& shader, Camera& camera)
     shader.setMat4("um4p", projection);
     shader.setMat4("um4v", view);
     shader.setMat4("um4m", mat4(1.0f));
+    shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
 
@@ -300,6 +302,8 @@ void guiMenu(Camera& camera)
         // ImGuiWindowFlags_MenuBar
     );
 
+    ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
+    ImGui::SameLine();
     ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
     ImGui::SameLine();
     ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);

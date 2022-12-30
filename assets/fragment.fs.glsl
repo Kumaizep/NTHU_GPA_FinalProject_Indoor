@@ -44,6 +44,7 @@ uniform float d;
 uniform float Ns;
 uniform int illum;
 
+uniform bool blinnPhongEnabled;
 uniform bool normalMappingEnabled;
 uniform bool bloomEffectEnabled;
 uniform bool lightMode;
@@ -100,6 +101,34 @@ vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
     return blinnPhong(Kdiffuse, N, TBNL, H) * attenuation;
 }
 
+void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, PointLight light)
+{
+	fragColor = vec4(0.0);
+	if (!blinnPhongEnabled && !bloomEffectEnabled)
+	{
+		fragColor = vec4(Kdiffuse, 1.0);
+	}
+	else
+	{
+		if (blinnPhongEnabled)
+		{
+			fragColor += blinnPhong(Kdiffuse, N, L, H);
+		}
+
+		if (bloomEffectEnabled)
+		{
+			if (haveMapHeight == 1)
+			{
+				fragColor += CalcPointLightNormalMap(Kdiffuse, N, pointlight, P);
+			}
+			else
+			{
+				fragColor += CalcPointLight(Kdiffuse, N, pointlight, P);
+			}
+		}
+	}
+}
+
 void main()
 {
 	vec4 Kdiffuse = vec4(Kd, 0.0);
@@ -125,29 +154,17 @@ void main()
 		}
 		else
 		{
-			fragColor = blinnPhong(Kdiffuse.rgb, vertexData.N, vertexData.L, vertexData.H);
-			if (bloomEffectEnabled)
-			{
-				fragColor += CalcPointLight(Kdiffuse.rgb, vertexData.N, pointlight, vertexData.P);
-			}
+			mixDraw(Kdiffuse.rgb, vertexData.N, vertexData.L, vertexData.H, vertexData.P, pointlight);
 		}
 	}
 	else if (haveMapHeight == 1 && normalMappingEnabled)
 	{
 		vec3 N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
-		fragColor = blinnPhong(Kd, N, vertexData.TBNL, vertexData.TBNH);
-		if (bloomEffectEnabled)
-		{
-			fragColor += CalcPointLightNormalMap(Kd, N, pointlight, vertexData.P);
-		}
+		mixDraw(Kd, N, vertexData.TBNL, vertexData.TBNH, vertexData.P, pointlight);
 	}
 	else
 	{
-		fragColor = blinnPhong(Kd, vertexData.N, vertexData.L, vertexData.H);
-		if (bloomEffectEnabled)
-		{
-			fragColor += CalcPointLight(Kd, vertexData.N, pointlight, vertexData.P);
-		}
+		mixDraw(Kd, vertexData.N, vertexData.L, vertexData.H, vertexData.P, pointlight);
 	}
 
 	color1 = vec4(vertexData.worldPosition, Ns);
