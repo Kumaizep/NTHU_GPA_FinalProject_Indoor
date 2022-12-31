@@ -142,7 +142,7 @@ void forwardDraw()
 
 	if (lightMode)
 	{
-		fragColor = vec4(1.0);
+		fragColor = vec4(1.0, 1.0, 1.0, 100.0);
 		renderType = 2;
 	}
 	else
