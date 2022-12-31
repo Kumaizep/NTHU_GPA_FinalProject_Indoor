@@ -127,14 +127,35 @@ void processCameraTrackball(Camera& camera, GLFWwindow *window)
 
 }
 
-void setupFrameShaderUniform(Shader& shader, Camera& camera)
+void setupDeferredShaderUniform(Shader& shader, Camera& camera)
 {
+    shader.use();
+
     shader.setMat4("um4v", view);
+
+    vec4 lightpos = view * vec4(1.87659f, 0.4625f , 0.103928f,1);
+    shader.setVec3("pointlight.position", vec3(lightpos));
+    shader.setFloat("pointlight.constant",1.0f);
+    shader.setFloat("pointlight.linear",0.7f);
+    shader.setFloat("pointlight.quadratic",0.14f);
 
     shader.setInt("gBufferMode", gBufferMode);
     shader.setBool("effectTestMode", effectTestMode);
-    // shader.setBool("effectTestMode2", effectTestMode2);
+    shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
+    shader.setBool("normalMappingEnabled", normalMappingEnabled);
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
+
+    shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
+    // cout << "DEBUG::MAIN::SFSU:effectTestMode " << (effectTestMode? 1.0 : 0.5) << endl;
+}
+
+void setupFrameShaderUniform(Shader& shader, Camera& camera)
+{
+    shader.use();
+
+    shader.setInt("gBufferMode", gBufferMode);
+    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
+    shader.setBool("effectTestMode", effectTestMode);
     shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
     // cout << "DEBUG::MAIN::SFSU:effectTestMode " << (effectTestMode? 1.0 : 0.5) << endl;
 }
@@ -157,6 +178,7 @@ void display(Shader& shader, Camera& camera)
     shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
+    shader.setInt("gBufferMode", gBufferMode);
 
     vec4 lightpos = view * vec4(1.87659f, 0.4625f , 0.103928f,1);
 
@@ -182,9 +204,10 @@ void display(Shader& shader, Camera& camera)
     }
 }
 
-void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Camera& camera, Frame& frame, Frame& bloom)
+void windowUpdate(Shader& frameShader, Shader& deferredShader, Shader& bloomShader, Shader& shader, Camera& camera, Frame& deferredFrame, Frame& frame, Frame& bloom)
 {
     if(needUpdateFBO){
+        updateFrameVariable(deferredFrame);
         updateFrameVariable(frame);
         // TAG: Merge bloom frame shader
         // ================================================================
@@ -200,6 +223,14 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
     glEnable(GL_DEPTH_TEST);
     display(shader, camera);
 
+    // Draw frame with deferredShader to frame.FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, deferredFrame.FBO); // back to default
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    setupDeferredShaderUniform(deferredShader, camera);
+    frame.draw(deferredShader);
+
     // TAG: Merge bloom frame shader
     // ================================================================
     // Draw frame with bloomShader to bloom.FBO
@@ -209,22 +240,20 @@ void windowUpdate(Shader& frameShader, Shader& bloomShader, Shader& shader, Came
     // glDisable(GL_DEPTH_TEST);
     // bloomShader.use();
     // setupFrameShaderUniform(bloomShader);
-    // frame.draw(bloomShader);
+    // deferredFrame.draw(bloomShader);
     // ================================================================
 
-    // Draw frame with frameShader to window
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
     glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
-    frameShader.use();
+    setupFrameShaderUniform(frameShader, camera);
     // TAG: Merge bloom frame shader
     // ================================================================
     // glActiveTexture(GL_TEXTURE7);
     // glBindTexture(GL_TEXTURE_2D, bloom.FBT);
     // ================================================================
-    setupFrameShaderUniform(frameShader, camera);
-    frame.draw(frameShader);
+    deferredFrame.draw(frameShader);
 }
 
 void reshapeResponse(GLFWwindow *window, int width, int height)
@@ -347,7 +376,7 @@ void guiMenu(Camera& camera)
     ImGui::SameLine();
     ImGui::RadioButton("Specular", &gBufferMode, 5);
     ImGui::SameLine();
-    ImGui::RadioButton("Test", &gBufferMode, 6);
+    ImGui::RadioButton("Disable", &gBufferMode, 6);
 
     ImGui::End();
 
@@ -390,9 +419,14 @@ int main(int argc, char **argv)
     }
 
     dumpInfo();
-    Shader shader("assets/vertex.vs.glsl", "assets/fragment.fs.glsl");
-    Shader bloomShader("assets/bloomVertex.vs.glsl", "assets/bloomFragment.fs.glsl");
-    Shader frameShader("assets/frameVertex.vs.glsl", "assets/frameFragment.fs.glsl");
+    Shader shader(
+        "assets/shader/baseVertex.vs.glsl", "assets/shader/baseFragment.fs.glsl");
+    Shader bloomShader(
+        "assets/shader/bloomVertex.vs.glsl", "assets/shader/bloomFragment.fs.glsl");
+    Shader deferredShader(
+        "assets/shader/deferredVertex.vs.glsl", "assets/shader/deferredFragment.fs.glsl");
+    Shader frameShader(
+        "assets/shader/frameVertex.vs.glsl", "assets/shader/frameFragment.fs.glsl");
     Camera camera = Camera()
                         .withPosition(vec3(4.0f, 1.0f, -1.5f))
                         .withFar(5000.0f)
@@ -400,9 +434,10 @@ int main(int argc, char **argv)
                         .withTheta(180.0f);
     setGUICameraStatus(camera);
 
-    cout << "DEBUG::MAIN::C-CAMERA-F-GV: " << camera.front.x << " " << camera.front.y << " " << camera.front.z << endl;
-    Frame bloom = Frame();
+    // cout << "DEBUG::MAIN::C-CAMERA-F-GV: " << camera.front.x << " " << camera.front.y << " " << camera.front.z << endl;
+    Frame deferredFrame = Frame();
     Frame frame = Frame();
+    Frame bloom = Frame();
     initialization(window);
 
     // register glfw callback functions
@@ -423,7 +458,7 @@ int main(int argc, char **argv)
 
         processCameraMove(camera);
         processCameraTrackball(camera, window);
-        windowUpdate(frameShader, bloomShader, shader, camera, frame, bloom);
+        windowUpdate(frameShader, deferredShader, bloomShader, shader, camera, deferredFrame, frame, bloom);
         guiMenu(camera);
 
         // swap buffer from back to front

@@ -79,10 +79,13 @@ const aiTextureType aiTextureTypes[] = {
 // Print OpenGL context related information.
 void dumpInfo(void)
 {
+    GLint maxAtt = 0;
+    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAtt);
 	printf("Vendor: %s\n", glGetString (GL_VENDOR));
 	printf("Renderer: %s\n", glGetString (GL_RENDERER));
 	printf("Version: %s\n", glGetString (GL_VERSION));
-	printf("GLSL: %s\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
+    printf("GLSL: %s\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
+	printf("GL_MAX_COLOR_ATTACHMENTS: %d\n", maxAtt);
 }
 
 void shaderLog(GLuint shader)

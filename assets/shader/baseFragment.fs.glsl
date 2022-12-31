@@ -7,32 +7,22 @@ layout(location = 3) out vec4 color3; // ambient color map
 layout(location = 4) out vec4 color4; // diffuse color map
 layout(location = 5) out vec4 color5; // specular color map
 layout(location = 6) out vec4 color6; // world space tangent
+layout(location = 7) out vec4 color7; // normal mapping texture
 
 in VertexData
 {
-    vec3 N; // eye space normal
-    vec3 L; // eye space light vector
-    vec3 H; // eye space halfway vector
-	vec3 P; // eye space position
-    vec3 T;
-    vec3 B;
-
-    vec3 TBNL;
-    vec3 TBNH;
-    vec3 TBNV;
-
     vec3 worldPosition;
     vec3 normal;
     vec2 texcoord;
     vec3 tangent;
-    vec3 bitangent;
 } vertexData;
 
 const vec3 Ia = vec3(0.1, 0.1, 0.1);
 const vec3 Id = vec3(0.7, 0.7, 0.7);
 const vec3 Is = vec3(0.2, 0.2, 0.2);
 
-uniform mat4 um4mv;
+uniform mat4 um4m;
+uniform mat4 um4v;
 uniform mat4 um4p;
 
 uniform vec3 Ka;
@@ -48,6 +38,7 @@ uniform bool blinnPhongEnabled;
 uniform bool normalMappingEnabled;
 uniform bool bloomEffectEnabled;
 uniform bool lightMode;
+uniform int gBufferMode;
 
 uniform int textureNumber;
 uniform int haveMapDiffuse;
@@ -81,7 +72,7 @@ vec4 blinnPhong(vec3 Kdiffuse, vec3 N, vec3 L ,vec3 H)
 
 vec4 CalcPointLight(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
 {
-    vec3 lightDir = normalize(light.position - P);
+    vec3 lightDir     = normalize(light.position - P);
     float distance    = length(light.position - P);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * pow(distance, 2));
 	
@@ -89,19 +80,19 @@ vec4 CalcPointLight(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
     return blinnPhong(Kdiffuse, N, lightDir, H) * attenuation;
 }
 
-vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
+vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
 {
-    vec3 lightDir = normalize(light.position - P);
+    vec3 lightDir     = normalize(light.position - P);
     float distance    = length(light.position - P);
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * pow(distance, 2));
 	
-    vec3 TBNL = normalize(vec3(dot(lightDir, vertexData.T), dot(lightDir, vertexData.B), dot(lightDir, vertexData.N)));
-    vec3 H = normalize(TBNL + vertexData.TBNV);
+    vec3 TBNL = normalize(vec3(dot(lightDir, T), dot(lightDir, B), dot(lightDir, originNormal)));
+    vec3 H = normalize(TBNL + TBNV);
 
     return blinnPhong(Kdiffuse, N, TBNL, H) * attenuation;
 }
 
-void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, PointLight light)
+void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
 {
 	fragColor = vec4(0.0);
 	if (!blinnPhongEnabled && !bloomEffectEnabled)
@@ -119,7 +110,7 @@ void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, PointLight light)
 		{
 			if (haveMapHeight == 1 && normalMappingEnabled)
 			{
-				fragColor += CalcPointLightNormalMap(Kdiffuse, N, pointlight, P);
+				fragColor += CalcPointLightNormalMap(Kdiffuse, N, pointlight, P, T, B, TBNV, originNormal);
 			}
 			else
 			{
@@ -129,46 +120,114 @@ void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, PointLight light)
 	}
 }
 
-void main()
+void forwardDraw()
 {
-	vec4 Kdiffuse = vec4(Kd, 0.0);
-	vec3 N = vertexData.N;
-	vec3 L = vertexData.L;
-	vec3 H = vertexData.H;
+	vec4 P = um4v * vec4(vertexData.worldPosition, 1.0);
+    vec4 LW = um4v * vec4(-2.845, 2.028, -1.293, 1.0);
+    // Eye space to tangent space TBN
+    vec3 T = normalize(mat3(um4v * um4m) * vertexData.tangent);
+    vec3 N = normalize(mat3(um4v * um4m) * vertexData.normal);
+    vec3 B = cross(N, T);
+    vec3 L = normalize(LW.xyz - P.xyz);
+    vec3 V = normalize(-P.xyz);
+    vec3 H = normalize(L + V);
+    vec3 originNormal = N;
 
-	if(lightMode)
+    vec3 TBNL = normalize(vec3(dot(L, T), dot(L, B), dot(L, N)));
+    vec3 TBNV = normalize(vec3(dot(V, T), dot(V, B), dot(V, N)));
+    vec3 TBNH = normalize(TBNL + TBNV);
+
+	vec4 Kdiffuse = vec4(Kd, 0.0);
+	float renderType = 0;
+
+	if (lightMode)
 	{
 		fragColor = vec4(1.0);
+		renderType = 2;
 	}
-	else if (haveMapDiffuse == 1)
+	else
 	{
-		if (colorChannel0 > 1)
+		if (haveMapDiffuse == 1)
 		{
-			Kdiffuse = texture(texture0, vertexData.texcoord);
-		}
-		else
-		{
-			Kdiffuse = texture(texture0, vertexData.texcoord).rrra;
-		}
+			if (colorChannel0 > 1)
+			{
+				Kdiffuse = texture(texture0, vertexData.texcoord);
+			}
+			else
+			{
+				Kdiffuse = texture(texture0, vertexData.texcoord).rrra;
+			}
 
-		if(Kdiffuse.a < 0.5)
+			if(Kdiffuse.a < 0.5)
+			{
+				discard;
+			}
+		}
+		else if (haveMapHeight == 1 && normalMappingEnabled)
 		{
-			discard;
+			N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
+			L = TBNL;
+			H = TBNH;
+			renderType = 1;
+		}
+		mixDraw(Kdiffuse.rgb, N, L, H, P.xyz, T, B, TBNV, originNormal);
+	}
+}
+
+void deferredDraw()
+{
+    vec3 N = normalize(mat3(um4v * um4m) * vertexData.normal);
+	vec4 Kdiffuse = vec4(Kd, 0.0);
+	float renderType = 0;
+
+	if (lightMode)
+	{
+		renderType = 2;
+	}
+	else
+	{
+		if (haveMapDiffuse == 1)
+		{
+			if (colorChannel0 > 1)
+			{
+				Kdiffuse = texture(texture0, vertexData.texcoord);
+			}
+			else
+			{
+				Kdiffuse = texture(texture0, vertexData.texcoord).rrra;
+			}
+
+			if(Kdiffuse.a < 0.5)
+			{
+				discard;
+			}
+		}
+		else if (haveMapHeight == 1 && normalMappingEnabled)
+		{
+			N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
+			renderType = 1;
 		}
 	}
-	else if (haveMapHeight == 1 && normalMappingEnabled)
-	{
-		N = normalize(texture(texture0, vertexData.texcoord).rgb * 2.0 - vec3(1.0));
-		L = vertexData.TBNL;
-		H = vertexData.TBNH;
-	}
-	
-	mixDraw(Kdiffuse.rgb, N, L, H, vertexData.P, pointlight);
 
 	color1 = vec4(vertexData.worldPosition, Ns);
-	color2 = vec4(vertexData.normal, 0.0);
+	color2 = vec4(mat3(um4m) * vertexData.normal, renderType);
 	color3 = vec4(Ka, 0.0);
 	color4 = Kdiffuse;
 	color5 = vec4(Ks, 0.0);
-	color6 = vec4(vertexData.tangent, 0.0);
+	color6 = vec4(mat3(um4m) * vertexData.tangent, 0.0);
+	color7 = vec4(N, 0.0);
+}
+
+void main()
+{
+	if (gBufferMode == 6)
+	{
+		// Deferred rendering disabled
+		forwardDraw();
+	}
+	else
+	{
+		// Deferred rendering enabled
+		deferredDraw();
+	}
 }

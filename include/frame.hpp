@@ -5,7 +5,7 @@
 #include "texture.hpp"
 #include "shader.hpp"
 
-#define G_BUFFER_NUM 6
+#define G_BUFFER_NUM 7
 
 const GLfloat quadVertices[] = {
         -1.0f,  1.0f,  0.0f, 1.0f,
@@ -90,7 +90,7 @@ public:
 
     GLuint FBT;
 private:
-    GLuint GBuffer[6];
+    GLuint GBuffer[G_BUFFER_NUM];
     GLuint quadVAO;
     vector<Texture> filterTextures;
 
@@ -101,11 +101,20 @@ private:
     {
         glGenTextures(1, &FBT);
         glBindTexture(GL_TEXTURE_2D, FBT);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frameWidth, frameHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FBT, 0);
+    }
+
+    void bindGbufferTexture(int index, GLint internalformat, GLenum format, GLenum type)
+    {
+        glBindTexture(GL_TEXTURE_2D, GBuffer[index]);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalformat, frameWidth, frameHeight, 0, format, type, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1 + index, GL_TEXTURE_2D, GBuffer[index], 0);
     }
 
     void createGBufferTextureObject()
@@ -113,45 +122,25 @@ private:
         glGenTextures(G_BUFFER_NUM, GBuffer);
 
         // world space vertex
-        glBindTexture(GL_TEXTURE_2D, GBuffer[0]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, GBuffer[0], 0);
+        bindGbufferTexture(0, GL_RGBA32F, GL_RGBA, GL_FLOAT);
 
         // world space normal
-        glBindTexture(GL_TEXTURE_2D, GBuffer[1]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, GBuffer[1], 0);
+        bindGbufferTexture(1, GL_RGBA32F, GL_RGBA, GL_FLOAT);
 
         // ambient color map
-        glBindTexture(GL_TEXTURE_2D, GBuffer[2]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, frameWidth, frameHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, GBuffer[2], 0);
+        bindGbufferTexture(2, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 
         // diffuse color map
-        glBindTexture(GL_TEXTURE_2D, GBuffer[3]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, frameWidth, frameHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, GBuffer[3], 0);
+        bindGbufferTexture(3, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
         
         // specular color map
-        glBindTexture(GL_TEXTURE_2D, GBuffer[4]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, frameWidth, frameHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, GBuffer[4], 0);
+        bindGbufferTexture(4, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 
-        glBindTexture(GL_TEXTURE_2D, GBuffer[5]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D, GBuffer[5], 0);
+        // world space tangent
+        bindGbufferTexture(5, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+
+        // normal mapping texture
+        bindGbufferTexture(6, GL_RGBA32F, GL_RGBA, GL_FLOAT);
 
         GLuint attachments[G_BUFFER_NUM + 1] = { 
             GL_COLOR_ATTACHMENT0,
@@ -160,7 +149,8 @@ private:
             GL_COLOR_ATTACHMENT3,
             GL_COLOR_ATTACHMENT4,
             GL_COLOR_ATTACHMENT5,
-            GL_COLOR_ATTACHMENT6
+            GL_COLOR_ATTACHMENT6,
+            GL_COLOR_ATTACHMENT7
         };
         glDrawBuffers(G_BUFFER_NUM + 1, attachments);
     }
