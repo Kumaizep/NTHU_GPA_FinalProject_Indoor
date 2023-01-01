@@ -12,15 +12,19 @@ layout(binding = 4) uniform sampler2D texture4; // diffuse color map
 layout(binding = 5) uniform sampler2D texture5; // specular color map
 layout(binding = 6) uniform sampler2D texture6; // world space tangent
 layout(binding = 7) uniform sampler2D texture7; // normal mapping texture
+layout(binding = 8) uniform sampler2DShadow texture8; // shadow map
 
 uniform vec2 frameSize;
+
 uniform int gBufferMode;
 uniform bool effectTestMode;
 uniform bool blinnPhongEnabled;
-uniform bool normalMappingEnabled;
+uniform bool directionalShadowEnabled;
 uniform bool bloomEffectEnabled;
+uniform bool normalMappingEnabled;
 
 uniform mat4 um4v;
+uniform mat4 shadow_sbpv;
 
 const vec3 Ia = vec3(0.1, 0.1, 0.1);
 const vec3 Id = vec3(0.7, 0.7, 0.7);
@@ -35,7 +39,7 @@ struct PointLight {
 };
 uniform PointLight pointlight;
 
-vec4 blinnPhong(vec3 N, vec3 L ,vec3 H)
+vec4 blinnPhong(vec3 N, vec3 L ,vec3 H, bool needShadow)
 {
 	vec3 Ka = texture(texture3, texCoords).xyz;
 	vec3 Kd = texture(texture4, texCoords).xyz;
@@ -47,7 +51,12 @@ vec4 blinnPhong(vec3 N, vec3 L ,vec3 H)
 	vec3 diffuse = Kd * Id * max(dot(L, N), 0.0);
 	// specular
 	vec3 specular = Ks * Is * pow(max(dot(H, N), 0.0), Ns); 
-
+	
+	if(needShadow){
+    	vec4 shadow_coord = shadow_sbpv * vec4(texture(texture1, texCoords).xyz,1);
+		float shadow = textureProj(texture8, shadow_coord+ vec4(0,0,-0.02,0));
+		return vec4(ambient + shadow*(diffuse + specular) , 1.0f);
+	}
 	return vec4(ambient + diffuse + specular, 1.0f);
 }
 
@@ -58,7 +67,7 @@ vec4 CalcPointLight(vec3 N, PointLight light, vec3 P)
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * pow(distance, 2));
 	
     vec3 H = normalize(lightDir - normalize(P));
-    return blinnPhong(N, lightDir, H) * attenuation;
+    return blinnPhong(N, lightDir, H, false) * attenuation;
 }
 
 vec4 CalcPointLightNormalMap(vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
@@ -70,7 +79,7 @@ vec4 CalcPointLightNormalMap(vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, v
     vec3 TBNL = normalize(vec3(dot(lightDir, T), dot(lightDir, B), dot(lightDir, originNormal)));
     vec3 H = normalize(TBNL + TBNV);
 
-    return blinnPhong(N, TBNL, H) * attenuation;
+    return blinnPhong(N, TBNL, H, false) * attenuation;
 }
 
 void defaultDraw()
@@ -101,7 +110,7 @@ void defaultDraw()
 		N = texture(texture7, texCoords).xyz;
 	}
 
-	if (!blinnPhongEnabled && !bloomEffectEnabled)
+	if (!blinnPhongEnabled && !bloomEffectEnabled && !directionalShadowEnabled)
 	{
 		// Default render: Kd and Kd_map
 		color0 = vec4(texture(texture4, texCoords).xyz, 1.0);
@@ -109,10 +118,10 @@ void defaultDraw()
 	else
 	{
 		color0 = vec4(0.0);
-		if (blinnPhongEnabled)
+		if (blinnPhongEnabled || directionalShadowEnabled)
 		{
 			// Blinn Phong render
-			color0 += blinnPhong(N, L, H);
+			color0 += blinnPhong(N, L, H, directionalShadowEnabled);
 		}
 		if (bloomEffectEnabled)
 		{

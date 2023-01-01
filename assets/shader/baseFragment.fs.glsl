@@ -46,6 +46,7 @@ uniform int haveMapHeight;
 layout(binding = 0) uniform sampler2D texture0;
 layout(binding = 1) uniform sampler2D texture1;
 layout(binding = 2) uniform sampler2D texture2;
+
 uniform int colorChannel0;
 uniform int colorChannel1;
 uniform int colorChannel2;
@@ -67,7 +68,7 @@ vec4 blinnPhong(vec3 Kdiffuse, vec3 N, vec3 L ,vec3 H)
 	vec3 diffuse = Kdiffuse * Id * max(dot(L, N), 0.0);
 	vec3 specular = Ks * Is * pow(max(dot(H, N), 0.0), Ns); 
 
-	return vec4(ambient + diffuse + specular, 1.0f);
+	return vec4(ambient + diffuse + specular , 1.0f);
 }
 
 vec4 CalcPointLight(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)

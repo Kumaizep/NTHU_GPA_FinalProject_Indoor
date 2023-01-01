@@ -4,7 +4,7 @@
 
 - [x] Render scene correctly
 - [x] Blinn-Phong shading
-- [ ] Directional light shadow
+- [x] Directional light shadow
 - [x] Deferred shading
 - [X] Normal mapping
 - [X] Bloom effect
