@@ -63,13 +63,18 @@ struct PointLight {
 uniform PointLight pointlight;
 
 
-vec4 blinnPhong(vec3 Kdiffuse, vec3 N, vec3 L ,vec3 H)
+vec4 blinnPhong(vec3 Kdiffuse, vec3 N, vec3 L ,vec3 H, bool needShadow)
 {
 	vec3 ambient = Ka * Ia;
 	vec3 diffuse = Kdiffuse * Id * max(dot(L, N), 0.0);
 	vec3 specular = Ks * Is * pow(max(dot(H, N), 0.0), Ns); 
+	
+	if(needShadow){
+		float shadow = textureProj(texture3, vertexData.shadow_coord+ vec4(0,0,-0.02,0));
+		return vec4(ambient + shadow*(diffuse + specular) , 1.0f);
+	}
 
-	return vec4(ambient + diffuse + specular, 1.0f);
+	return vec4(ambient + diffuse + specular , 1.0f);
 }
 
 vec4 CalcPointLight(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
@@ -79,7 +84,7 @@ vec4 CalcPointLight(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * pow(distance, 2));
 	
     vec3 H = normalize(lightDir - normalize(P));
-    return blinnPhong(Kdiffuse, N, lightDir, H) * attenuation;
+    return blinnPhong(Kdiffuse, N, lightDir, H, false) * attenuation;
 }
 
 vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
@@ -91,7 +96,7 @@ vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P, ve
     vec3 TBNL = normalize(vec3(dot(lightDir, T), dot(lightDir, B), dot(lightDir, originNormal)));
     vec3 H = normalize(TBNL + TBNV);
 
-    return blinnPhong(Kdiffuse, N, TBNL, H) * attenuation;
+    return blinnPhong(Kdiffuse, N, TBNL, H, false) * attenuation;
 }
 
 void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
@@ -105,7 +110,7 @@ void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, vec3 T, vec3 B, vec3
 	{
 		if (blinnPhongEnabled)
 		{
-			fragColor += blinnPhong(Kdiffuse, N, L, H);
+			fragColor += blinnPhong(Kdiffuse, N, L, H, true);
 		}
 
 		if (bloomEffectEnabled)
@@ -232,5 +237,4 @@ void main()
 		// Deferred rendering enabled
 		deferredDraw();
 	}
-	fragColor.rgb *= textureProj(texture3, vertexData.shadow_coord);
 }

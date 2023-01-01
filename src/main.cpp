@@ -435,9 +435,6 @@ int main(int argc, char **argv)
                         .withTheta(180.0f);
     Camera shadowCamera = Camera()
                               .withPosition(vec3(-2.845f, 2.028f, -1.293f))
-                              .withNear(0.1f)
-                              .withFar(10.0f)
-                              .withAspect(1)
                               .withMoveSpeed(3.0f)
                               .withTheta(180.0f);
     shadowCamera.setLookAt(vec3(0.542f, -0.141f, -0.422f));

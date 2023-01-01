@@ -35,11 +35,7 @@ vec4 blurHDR()
 		for (int j = 0; j < 5; ++j)
 		{
 			vec2 tc = texCoords + vec2(float(i - 2), float(j - 2))/frameSize;
-			// TAG: Merge bloom frame shader
-			// ================================================================
 			sum += coeffs[i] * coeffs[j] * blurHDRColor(tc);
-			// sum += coeffs[i] * coeffs[j] * texture(texture7, tc);
-			// ================================================================
 		}
 	return sum;
 }

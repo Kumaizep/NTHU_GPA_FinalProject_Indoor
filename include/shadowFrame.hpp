@@ -10,8 +10,6 @@ struct ShadowFrame
     // For Frame Buffer Object(FBO)
     GLuint FBO;
     GLuint depth_tex;
-    int frameWidth = 1024;
-    int frameHeight = 1024;
 
     ShadowFrame()
     {
