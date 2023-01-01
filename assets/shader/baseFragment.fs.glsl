@@ -15,7 +15,6 @@ in VertexData
     vec3 normal;
     vec2 texcoord;
     vec3 tangent;
-    vec4 shadow_coord; // Light-space coordinates
 } vertexData;
 
 const vec3 Ia = vec3(0.1, 0.1, 0.1);
@@ -47,7 +46,7 @@ uniform int haveMapHeight;
 layout(binding = 0) uniform sampler2D texture0;
 layout(binding = 1) uniform sampler2D texture1;
 layout(binding = 2) uniform sampler2D texture2;
-layout(binding = 3) uniform sampler2DShadow texture3;
+
 uniform int colorChannel0;
 uniform int colorChannel1;
 uniform int colorChannel2;
@@ -63,16 +62,11 @@ struct PointLight {
 uniform PointLight pointlight;
 
 
-vec4 blinnPhong(vec3 Kdiffuse, vec3 N, vec3 L ,vec3 H, bool needShadow)
+vec4 blinnPhong(vec3 Kdiffuse, vec3 N, vec3 L ,vec3 H)
 {
 	vec3 ambient = Ka * Ia;
 	vec3 diffuse = Kdiffuse * Id * max(dot(L, N), 0.0);
 	vec3 specular = Ks * Is * pow(max(dot(H, N), 0.0), Ns); 
-	
-	if(needShadow){
-		float shadow = textureProj(texture3, vertexData.shadow_coord+ vec4(0,0,-0.02,0));
-		return vec4(ambient + shadow*(diffuse + specular) , 1.0f);
-	}
 
 	return vec4(ambient + diffuse + specular , 1.0f);
 }
@@ -84,7 +78,7 @@ vec4 CalcPointLight(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P)
     float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * pow(distance, 2));
 	
     vec3 H = normalize(lightDir - normalize(P));
-    return blinnPhong(Kdiffuse, N, lightDir, H, false) * attenuation;
+    return blinnPhong(Kdiffuse, N, lightDir, H) * attenuation;
 }
 
 vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
@@ -96,7 +90,7 @@ vec4 CalcPointLightNormalMap(vec3 Kdiffuse, vec3 N, PointLight light, vec3 P, ve
     vec3 TBNL = normalize(vec3(dot(lightDir, T), dot(lightDir, B), dot(lightDir, originNormal)));
     vec3 H = normalize(TBNL + TBNV);
 
-    return blinnPhong(Kdiffuse, N, TBNL, H, false) * attenuation;
+    return blinnPhong(Kdiffuse, N, TBNL, H) * attenuation;
 }
 
 void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, vec3 T, vec3 B, vec3 TBNV, vec3 originNormal)
@@ -110,7 +104,7 @@ void mixDraw(vec3 Kdiffuse, vec3 N, vec3 L, vec3 H, vec3 P, vec3 T, vec3 B, vec3
 	{
 		if (blinnPhongEnabled)
 		{
-			fragColor += blinnPhong(Kdiffuse, N, L, H, true);
+			fragColor += blinnPhong(Kdiffuse, N, L, H);
 		}
 
 		if (bloomEffectEnabled)

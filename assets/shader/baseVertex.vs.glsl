@@ -9,7 +9,6 @@ layout(location = 4) in vec3 iv3bitangent;
 uniform mat4 um4v;
 uniform mat4 um4m;
 uniform mat4 um4p;
-uniform mat4 shadow_sbpv;
 
 out VertexData
 {
@@ -17,7 +16,6 @@ out VertexData
     vec3 normal;
     vec2 texcoord;
     vec3 tangent;
-    vec4 shadow_coord; // Light-space coordinates
 } vertexData;
 
 void main()
@@ -28,8 +26,6 @@ void main()
     vertexData.normal = iv3normal;
     vertexData.texcoord = iv2tex_coord;
     vertexData.tangent = iv3tangent;
-
-    vertexData.shadow_coord = shadow_sbpv * um4m * vec4(iv3vertex, 1.0);
 
     gl_Position = um4p * P;
 }

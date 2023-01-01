@@ -217,8 +217,8 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
     display(shadowShader, shadowCamera, 1);
 
     // setup depthmap at GL_TEXTURE3
-    shader.use();
-    glActiveTexture(GL_TEXTURE0 + 3);
+    deferredShader.use();
+    glActiveTexture(GL_TEXTURE0 + 8);
     glBindTexture(GL_TEXTURE_2D, shadowFrame.depth_tex);
     // make shadow vp matrix
     mat4 scale_bias(
@@ -226,7 +226,7 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
         0.0, 0.5, 0.0, 0.0,
         0.0, 0.0, 0.5, 0.0,
         0.5, 0.5, 0.5, 1.0);
-    shader.setMat4("shadow_sbpv", scale_bias * ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f) * shadowCamera.getView());
+    deferredShader.setMat4("shadow_sbpv", scale_bias * ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f) * shadowCamera.getView());
 
     // Draw scene to frame.FBO
     glViewport(0, 0, frameWidth, frameHeight);
