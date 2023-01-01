@@ -15,6 +15,7 @@ in VertexData
     vec3 normal;
     vec2 texcoord;
     vec3 tangent;
+    vec4 shadow_coord; // Light-space coordinates
 } vertexData;
 
 const vec3 Ia = vec3(0.1, 0.1, 0.1);
@@ -46,6 +47,7 @@ uniform int haveMapHeight;
 layout(binding = 0) uniform sampler2D texture0;
 layout(binding = 1) uniform sampler2D texture1;
 layout(binding = 2) uniform sampler2D texture2;
+layout(binding = 3) uniform sampler2DShadow texture3;
 uniform int colorChannel0;
 uniform int colorChannel1;
 uniform int colorChannel2;
@@ -230,4 +232,5 @@ void main()
 		// Deferred rendering enabled
 		deferredDraw();
 	}
+	fragColor.rgb *= textureProj(texture3, vertexData.shadow_coord);
 }
