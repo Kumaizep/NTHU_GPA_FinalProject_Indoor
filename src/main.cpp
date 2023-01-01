@@ -215,6 +215,7 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
     // render from light view and generate shadow map
     shadowFrame.enable();
     display(shadowShader, shadowCamera, 1);
+    glDisable(GL_POLYGON_OFFSET_FILL);
 
     // setup depthmap at GL_TEXTURE3
     deferredShader.use();
