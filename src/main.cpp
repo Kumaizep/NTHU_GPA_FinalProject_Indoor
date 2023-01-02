@@ -176,7 +176,7 @@ void display(Shader &shader, Camera &camera, bool shadowMode)
 void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowShader, Shader &shader, 
     Camera &camera, Camera &shadowCamera, Frame &deferredFrame, Frame &frame, ShadowFrame &shadowFrame)
 {
-    cout << "DEBUG::MAIN::WU::Shadow position: " << shadowCamera.position.x << " " << shadowCamera.position.y << " " << shadowCamera.position.z << endl;
+    // cout << "DEBUG::MAIN::WU::Shadow position: " << shadowCamera.position.x << " " << shadowCamera.position.y << " " << shadowCamera.position.z << endl;
     if (needUpdateFBO)
     {
         updateFrameVariable(deferredFrame);

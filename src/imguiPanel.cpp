@@ -60,6 +60,7 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
         camera.setPosition(vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]));
         camera.setLookAt(vec3(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]));
     }
+    ImGui::Separator();
 
     if (ImGui::TreeNode("Basic"))
     {
@@ -75,11 +76,24 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
         ImGui::SameLine();
         ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
 
-        if (ImGui::TreeNode("Directional Shadow Light Source"))
+        if (ImGui::TreeNode("Directional shadow light source Controller"))
         {
-            ImGui::SliderFloat("##DSLS-X", &directionalShadowPosition.x, -50.0f, 50.0f);
-            ImGui::SliderFloat("##DSLS-Y", &directionalShadowPosition.y, -50.0f, 50.0f);
-            ImGui::SliderFloat("##DSLS-Z", &directionalShadowPosition.z, -50.0f, 50.0f);
+            if (directionalShadowEnabled)
+            {
+                ImGui::Text("X ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##DSLS-X", &directionalShadowPosition.x, -15.0f, 15.0f);
+                ImGui::Text("Y ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##DSLS-Y", &directionalShadowPosition.y, -15.0f, 15.0f);
+                ImGui::Text("Z ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##DSLS-Z", &directionalShadowPosition.z, -15.0f, 15.0f);
+            }
+            else
+            {
+                ImGui::Text(" Directional shadow is disabled. Enable it first.");
+            }
             
             ImGui::TreePop();
         }
