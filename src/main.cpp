@@ -31,9 +31,9 @@ bool effectTestMode = false;
 bool effectTestMode2 = false;
 
 bool blinnPhongEnabled = false;
-bool directionalShadowEnabled = false;
-bool bloomEffectEnabled = false;
+bool directionalShadowEnabled= false;
 bool normalMappingEnabled = false;
+bool bloomEffectEnabled = false;
 
 bool needUpdateFBO = false;
 
@@ -140,7 +140,6 @@ void setupDeferredShaderUniform(Shader &shader, Camera &camera)
 
     shader.setInt("gBufferMode", gBufferMode);
     shader.setBool("effectTestMode", effectTestMode);
-
     shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
     shader.setBool("directionalShadowEnabled", directionalShadowEnabled);
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
@@ -218,6 +217,7 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
     // render from light view and generate shadow map
     shadowFrame.enable();
     display(shadowShader, shadowCamera, 1);
+    glDisable(GL_POLYGON_OFFSET_FILL);
 
     // setup depthmap at GL_TEXTURE3
     deferredShader.use();
@@ -329,14 +329,14 @@ void guiMenu(Camera &camera)
     ImGui::SetNextWindowSize(ImVec2(guiMenuWidth + 2, 0));
     ImGui::SetNextWindowPos(ImVec2(-1, 0));
     ImGui::Begin("Menu", NULL,
-                ImGuiWindowFlags_NoTitleBar |
-                // ImGuiWindowFlags_NoBringToFrontOnFocus |
-                // ImGuiWindowFlags_NoBackground |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoResize
-                // ImGuiWindowFlags_MenuBar
+                 ImGuiWindowFlags_NoTitleBar |
+                     // ImGuiWindowFlags_NoBringToFrontOnFocus |
+                     // ImGuiWindowFlags_NoBackground |
+                     ImGuiWindowFlags_NoMove |
+                     ImGuiWindowFlags_NoResize
+                 // ImGuiWindowFlags_MenuBar
     );
-    
+
     ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
     if (!blinnPhongEnabled)
         directionalShadowEnabled = false;

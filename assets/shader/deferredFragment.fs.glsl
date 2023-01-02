@@ -15,13 +15,12 @@ layout(binding = 7) uniform sampler2D texture7; // normal mapping texture
 layout(binding = 8) uniform sampler2DShadow texture8; // shadow map
 
 uniform vec2 frameSize;
-
 uniform int gBufferMode;
 uniform bool effectTestMode;
 uniform bool blinnPhongEnabled;
 uniform bool directionalShadowEnabled;
-uniform bool bloomEffectEnabled;
 uniform bool normalMappingEnabled;
+uniform bool bloomEffectEnabled;
 
 uniform mat4 um4v;
 uniform mat4 shadow_sbpv;
@@ -110,7 +109,7 @@ void defaultDraw()
 		N = texture(texture7, texCoords).xyz;
 	}
 
-	if (!blinnPhongEnabled && !bloomEffectEnabled && !directionalShadowEnabled)
+	if (!blinnPhongEnabled && !bloomEffectEnabled)
 	{
 		// Default render: Kd and Kd_map
 		color0 = vec4(texture(texture4, texCoords).xyz, 1.0);
@@ -118,7 +117,7 @@ void defaultDraw()
 	else
 	{
 		color0 = vec4(0.0);
-		if (blinnPhongEnabled || directionalShadowEnabled)
+		if (blinnPhongEnabled)
 		{
 			// Blinn Phong render
 			color0 += blinnPhong(N, L, H, directionalShadowEnabled);
