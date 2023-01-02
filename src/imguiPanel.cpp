@@ -23,7 +23,7 @@ void ImguiPanel::initinalize(GLFWwindow *window)
 
 void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directionalShadowEnabled,
     bool &normalMappingEnabled, bool &bloomEffectEnabled, bool &effectTestMode, 
-    float *cameraPosition, float *cameraLookAt, int &gBufferMode)
+    float *cameraPosition, float *cameraLookAt, int &gBufferMode, vec3 &directionalShadowPosition)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -36,23 +36,9 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
                 // | ImGuiWindowFlags_NoBringToFrontOnFocus 
                 // | ImGuiWindowFlags_NoBackground 
                 | ImGuiWindowFlags_NoMove
-                // | ImGuiWindowFlags_NoResize 
+                | ImGuiWindowFlags_NoResize 
                 // | ImGuiWindowFlags_MenuBar 
     );
-
-    ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
-    if (!blinnPhongEnabled)
-        directionalShadowEnabled = false;
-    ImGui::SameLine();
-    ImGui::Checkbox("Directional Shadow", &directionalShadowEnabled);
-    if (directionalShadowEnabled)
-        blinnPhongEnabled = true;
-    ImGui::SameLine();
-    ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
-    ImGui::SameLine();
-    ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
-    ImGui::SameLine();
-    ImGui::Checkbox("Test Mode", &effectTestMode);
     // ImGui::SameLine();
     // ImGui::Checkbox("Test Mode2", &effectTestMode2);
 
@@ -75,21 +61,55 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
         camera.setLookAt(vec3(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]));
     }
 
-    ImGui::Text("G-bufferMode:");
-    ImGui::SameLine();
-    ImGui::RadioButton("Default", &gBufferMode, 0);
-    ImGui::SameLine();
-    ImGui::RadioButton("Vertex", &gBufferMode, 1);
-    ImGui::SameLine();
-    ImGui::RadioButton("Normal", &gBufferMode, 2);
-    ImGui::SameLine();
-    ImGui::RadioButton("Ambient", &gBufferMode, 3);
-    ImGui::SameLine();
-    ImGui::RadioButton("Diffuse", &gBufferMode, 4);
-    ImGui::SameLine();
-    ImGui::RadioButton("Specular", &gBufferMode, 5);
-    ImGui::SameLine();
-    ImGui::RadioButton("Disable", &gBufferMode, 6);
+    if (ImGui::TreeNode("Basic"))
+    {
+        ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
+        if (!blinnPhongEnabled)
+            directionalShadowEnabled = false;
+        ImGui::SameLine();
+        ImGui::Checkbox("Directional Shadow", &directionalShadowEnabled);
+        if (directionalShadowEnabled)
+            blinnPhongEnabled = true;
+        ImGui::SameLine();
+        ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
+        ImGui::SameLine();
+        ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
+
+        if (ImGui::TreeNode("Directional Shadow Light Source"))
+        {
+            ImGui::SliderFloat("##DSLS-X", &directionalShadowPosition.x, -50.0f, 50.0f);
+            ImGui::SliderFloat("##DSLS-Y", &directionalShadowPosition.y, -50.0f, 50.0f);
+            ImGui::SliderFloat("##DSLS-Z", &directionalShadowPosition.z, -50.0f, 50.0f);
+            
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("G-buffers"))
+        {
+            ImGui::RadioButton("Default", &gBufferMode, 0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Vertex", &gBufferMode, 1);
+            ImGui::SameLine();
+            ImGui::RadioButton("Normal", &gBufferMode, 2);
+            ImGui::SameLine();
+            ImGui::RadioButton("Ambient", &gBufferMode, 3);
+            ImGui::SameLine();
+            ImGui::RadioButton("Diffuse", &gBufferMode, 4);
+            ImGui::SameLine();
+            ImGui::RadioButton("Specular", &gBufferMode, 5);
+            ImGui::SameLine();
+            ImGui::RadioButton("Disable", &gBufferMode, 6);
+
+            ImGui::TreePop();
+        }
+        ImGui::Separator();
+        ImGui::TreePop();
+    }
+    if (ImGui::TreeNode("Advanced"))
+    {
+        // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
+        ImGui::TreePop();
+    }
 
     ImGui::End();
 

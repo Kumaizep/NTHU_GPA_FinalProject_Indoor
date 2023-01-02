@@ -1,3 +1,4 @@
+#include "GLM/fwd.hpp"
 #include "common.hpp"
 #include "camera.hpp"
 #include "shader.hpp"
@@ -24,6 +25,7 @@ int frameHeight = INIT_HEIGHT;
 
 float cameraPosition[] = {1.0, 1.0, 1.0};
 float cameraLookAt[] = {1.0, 1.0, 1.0};
+vec3 directionalShadowPosition = vec3(-2.845, 2.028, -1.293);
 
 int gBufferMode = 0;
 bool effectTestMode = false;
@@ -171,8 +173,10 @@ void display(Shader &shader, Camera &camera, bool shadowMode)
     }
 }
 
-void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowShader, Shader &shader, Camera &camera, Camera &shadowCamera, Frame &deferredFrame, Frame &frame, ShadowFrame &shadowFrame)
+void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowShader, Shader &shader, 
+    Camera &camera, Camera &shadowCamera, Frame &deferredFrame, Frame &frame, ShadowFrame &shadowFrame)
 {
+    cout << "DEBUG::MAIN::WU::Shadow position: " << shadowCamera.position.x << " " << shadowCamera.position.y << " " << shadowCamera.position.z << endl;
     if (needUpdateFBO)
     {
         updateFrameVariable(deferredFrame);
@@ -328,7 +332,7 @@ int main(int argc, char **argv)
                         .withMoveSpeed(3.0f)
                         .withTheta(180.0f);
     Camera shadowCamera = Camera()
-                              .withPosition(vec3(-2.845f, 2.028f, -1.293f))
+                              .withPosition(directionalShadowPosition)
                               .withMoveSpeed(3.0f)
                               .withTheta(180.0f);
     shadowCamera.setLookAt(vec3(0.542f, -0.141f, -0.422f));
@@ -365,7 +369,8 @@ int main(int argc, char **argv)
         imguiPanel.setWidth(frameWidth);
         imguiPanel.setHeight(frameHeight);
         imguiPanel.guiMenu(camera, blinnPhongEnabled, directionalShadowEnabled, normalMappingEnabled, 
-            bloomEffectEnabled, effectTestMode, cameraPosition, cameraLookAt, gBufferMode);
+            bloomEffectEnabled, effectTestMode, cameraPosition, cameraLookAt, gBufferMode, directionalShadowPosition);
+        shadowCamera.setPosition(directionalShadowPosition);
 
         // swap buffer from back to front
         glfwSwapBuffers(window);

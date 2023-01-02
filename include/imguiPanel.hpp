@@ -2,6 +2,7 @@
 #define IMGUIPANEL_HPP
 
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 
@@ -18,7 +19,7 @@ public:
 
     void guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directionalShadowEnabled,
         bool &normalMappingEnabled, bool &bloomEffectEnabled, bool &effectTestMode, 
-        float *cameraPosition, float *cameraLookAt, int &gBufferMode);
+        float *cameraPosition, float *cameraLookAt, int &gBufferMode, vec3 &directionalShadowPosition);
 
     void menuCleanup();
 
