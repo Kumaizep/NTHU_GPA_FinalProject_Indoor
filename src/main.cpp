@@ -200,6 +200,7 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
         0.0, 0.0, 0.5, 0.0,
         0.5, 0.5, 0.5, 1.0);
     deferredShader.setMat4("shadow_sbpv", scale_bias * ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f) * shadowCamera.getView());
+    deferredShader.setVec3("dirtectionalShadowPosition", shadowCamera.getPosition());
 
     // Draw scene to frame.FBO
     glViewport(0, 0, frameWidth, frameHeight);
@@ -333,8 +334,8 @@ int main(int argc, char **argv)
                         .withTheta(180.0f);
     Camera shadowCamera = Camera()
                               .withPosition(directionalShadowPosition)
-                              .withMoveSpeed(3.0f)
-                              .withTheta(180.0f);
+                              .withNear(0.1f)
+                              .withFar(10.0f);
     shadowCamera.setLookAt(vec3(0.542f, -0.141f, -0.422f));
     setGUICameraStatus(camera);
 

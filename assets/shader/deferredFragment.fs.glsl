@@ -24,6 +24,7 @@ uniform bool bloomEffectEnabled;
 
 uniform mat4 um4v;
 uniform mat4 shadow_sbpv;
+uniform vec3 dirtectionalShadowPosition;
 
 const vec3 Ia = vec3(0.1, 0.1, 0.1);
 const vec3 Id = vec3(0.7, 0.7, 0.7);
@@ -89,6 +90,8 @@ void defaultDraw()
 
 	vec4 P = um4v * vec4(vertex, 1.0);
 	vec4 LW = um4v * vec4(-2.845, 2.028, -1.293, 1.0);
+	if (directionalShadowEnabled)
+		LW = um4v * vec4(dirtectionalShadowPosition, 1.0);
 	// Eye space to tangent space TBN
 	vec3 N = normalize(mat3(um4v) * normal);
 	vec3 L = normalize(LW.xyz - P.xyz);
