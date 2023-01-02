@@ -1,4 +1,5 @@
 #include "camera.hpp"
+#include "GLM/fwd.hpp"
 
 Camera::Camera()
 {
@@ -75,7 +76,9 @@ Camera& Camera::withPhi(float val)
 
 void Camera::setPosition(vec3 val)
 {
+    vec3 tempLookAt = position + front * lookAtDistance;
     position = val;
+    setLookAt(tempLookAt);
 }
 
 void Camera::setLookAt(vec3 val)
