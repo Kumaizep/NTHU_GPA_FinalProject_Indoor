@@ -4,7 +4,7 @@
 #include "model.hpp"
 #include "frame.hpp"
 #include "shadowFrame.hpp"
-#include <vector>
+#include "imguiPanel.hpp"
 
 float timerCurrent = 0.0f;
 float timerLast = 0.0f;
@@ -40,21 +40,9 @@ bool needUpdateFBO = false;
 vector<Model> models;
 vector<Model> lights;
 
+
 void initialization(GLFWwindow *window)
 {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-    io.KeyMap[ImGuiKey_Delete] = GLFW_KEY_DELETE;
-    io.KeyMap[ImGuiKey_Backspace] = GLFW_KEY_BACKSPACE;
-    io.Fonts->AddFontFromFileTTF("assets/fonts/NotoSansCJK-Medium.ttc", 20.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-
-    ImGui::StyleColorsLight();
-
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init("#version 410 core");
-
     models.push_back(Model("assets/indoor/Grey_White_Room.obj"));
     models.push_back(Model("assets/indoor/trice.obj")
                          .withPosition(vec3(2.05, 0.628725, -1.9))
@@ -126,67 +114,46 @@ void processCameraTrackball(Camera &camera, GLFWwindow *window)
     }
 }
 
-void setupDeferredShaderUniform(Shader &shader, Camera &camera)
-{
-    shader.use();
-
-    shader.setMat4("um4v", camera.getView());
-
-    vec4 lightpos = camera.getView() * vec4(1.87659f, 0.4625f, 0.103928f, 1);
-    shader.setVec3("pointlight.position", vec3(lightpos));
-    shader.setFloat("pointlight.constant", 1.0f);
-    shader.setFloat("pointlight.linear", 0.7f);
-    shader.setFloat("pointlight.quadratic", 0.14f);
-
-    shader.setInt("gBufferMode", gBufferMode);
-    shader.setBool("effectTestMode", effectTestMode);
-    shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
-    shader.setBool("directionalShadowEnabled", directionalShadowEnabled);
-    shader.setBool("normalMappingEnabled", normalMappingEnabled);
-    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
-
-    shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
-    // cout << "DEBUG::MAIN::SFSU:effectTestMode " << (effectTestMode? 1.0 : 0.5) << endl;
-}
-
-void setupFrameShaderUniform(Shader &shader, Camera &camera)
-{
-    shader.use();
-
-    shader.setInt("gBufferMode", gBufferMode);
-    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
-    shader.setBool("effectTestMode", effectTestMode);
-    shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
-    // cout << "DEBUG::MAIN::SFSU:effectTestMode " << (effectTestMode? 1.0 : 0.5) << endl;
-}
-
 void updateFrameVariable(Frame &frame)
 {
     frame.setFrameSize(frameWidth, frameHeight);
     frame.updateFrameBufferObject();
 }
 
-void display(Shader &shader, Camera &camera, bool ShadowMode)
+void setupShaderUniform(Shader &shader, Camera &camera, bool shadowMode = false)
 {
     shader.use();
 
-    if (ShadowMode)
+    // MVP Matrix
+    if (shadowMode)
         shader.setMat4("um4p", ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f));
     else
         shader.setMat4("um4p", camera.getPerspective());
     shader.setMat4("um4v", camera.getView());
     shader.setMat4("um4m", mat4(1.0f));
-    shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
-    shader.setBool("normalMappingEnabled", normalMappingEnabled);
-    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
-    shader.setInt("gBufferMode", gBufferMode);
 
+    // point light source
     vec4 lightpos = camera.getView() * vec4(1.87659f, 0.4625f, 0.103928f, 1);
-
     shader.setVec3("pointlight.position", vec3(lightpos));
     shader.setFloat("pointlight.constant", 1.0f);
     shader.setFloat("pointlight.linear", 0.7f);
     shader.setFloat("pointlight.quadratic", 0.14f);
+
+    // rendering flag
+    shader.setInt("gBufferMode", gBufferMode);
+    shader.setBool("blinnPhongEnabled", blinnPhongEnabled);
+    shader.setBool("directionalShadowEnabled", directionalShadowEnabled);
+    shader.setBool("normalMappingEnabled", normalMappingEnabled);
+    shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
+    shader.setBool("effectTestMode", effectTestMode);
+
+    // others
+    shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
+}
+
+void display(Shader &shader, Camera &camera, bool shadowMode)
+{
+    setupShaderUniform(shader, camera, shadowMode);
 
     shader.setBool("lightMode", 0);
     for (auto &it : models)
@@ -233,26 +200,26 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
 
     // Draw scene to frame.FBO
     glViewport(0, 0, frameWidth, frameHeight);
-    glBindFramebuffer(GL_FRAMEBUFFER, frame.FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, deferredFrame.FBO);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // We're not using stencil buffer now
     glEnable(GL_DEPTH_TEST);
     display(shader, camera, 0);
 
     // Draw frame with deferredShader to frame.FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, deferredFrame.FBO); // back to default
+    glBindFramebuffer(GL_FRAMEBUFFER, frame.FBO); // back to default
     glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
-    setupDeferredShaderUniform(deferredShader, camera);
-    frame.draw(deferredShader);
+    setupShaderUniform(deferredShader, camera);
+    deferredFrame.draw(deferredShader);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
     glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
-    setupFrameShaderUniform(frameShader, camera);
-    deferredFrame.draw(frameShader);
+    setupShaderUniform(frameShader, camera);
+    frame.draw(frameShader);
 }
 
 void reshapeResponse(GLFWwindow *window, int width, int height)
@@ -320,87 +287,6 @@ void mouseResponse(GLFWwindow *window, int button, int action, int mods)
     }
 }
 
-void guiMenu(Camera &camera)
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::SetNextWindowSize(ImVec2(guiMenuWidth + 2, 0));
-    ImGui::SetNextWindowPos(ImVec2(-1, 0));
-    ImGui::Begin("Menu", NULL,
-                 ImGuiWindowFlags_NoTitleBar |
-                     // ImGuiWindowFlags_NoBringToFrontOnFocus |
-                     // ImGuiWindowFlags_NoBackground |
-                     ImGuiWindowFlags_NoMove |
-                     ImGuiWindowFlags_NoResize
-                 // ImGuiWindowFlags_MenuBar
-    );
-
-    ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
-    if (!blinnPhongEnabled)
-        directionalShadowEnabled = false;
-    ImGui::SameLine();
-    ImGui::Checkbox("Directional Shadow", &directionalShadowEnabled);
-    if (directionalShadowEnabled)
-        blinnPhongEnabled = true;
-    ImGui::SameLine();
-    ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
-    ImGui::SameLine();
-    ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
-    ImGui::SameLine();
-    ImGui::Checkbox("Test Mode", &effectTestMode);
-    // ImGui::SameLine();
-    // ImGui::Checkbox("Test Mode2", &effectTestMode2);
-
-    ImGui::Text("Eye Position:");
-    ImGui::SameLine(100);
-    ImGui::PushItemWidth(240);
-    ImGui::InputFloat3("##Eye Position", cameraPosition);
-    ImGui::PopItemWidth();
-    ImGui::SameLine(350);
-    ImGui::Text("Look-at Center:");
-    ImGui::SameLine(450);
-    ImGui::PushItemWidth(240);
-    ImGui::InputFloat3("##look-at center", cameraLookAt);
-    ImGui::PopItemWidth();
-    ImGui::SameLine(700);
-    if (ImGui::Button("Enter"))
-    {
-        cout << "DEBUG::MAIN::GUIM::sent Pos" << endl;
-        camera.setPosition(vec3(cameraPosition[0], cameraPosition[1], cameraPosition[2]));
-        camera.setLookAt(vec3(cameraLookAt[0], cameraLookAt[1], cameraLookAt[2]));
-    }
-
-    ImGui::Text("G-bufferMode:");
-    ImGui::SameLine();
-    ImGui::RadioButton("Default", &gBufferMode, 0);
-    ImGui::SameLine();
-    ImGui::RadioButton("Vertex", &gBufferMode, 1);
-    ImGui::SameLine();
-    ImGui::RadioButton("Normal", &gBufferMode, 2);
-    ImGui::SameLine();
-    ImGui::RadioButton("Ambient", &gBufferMode, 3);
-    ImGui::SameLine();
-    ImGui::RadioButton("Diffuse", &gBufferMode, 4);
-    ImGui::SameLine();
-    ImGui::RadioButton("Specular", &gBufferMode, 5);
-    ImGui::SameLine();
-    ImGui::RadioButton("Disable", &gBufferMode, 6);
-
-    ImGui::End();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void menuCleanup()
-{
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-}
-
 int main(int argc, char **argv)
 {
     // initial glfw
@@ -450,9 +336,11 @@ int main(int argc, char **argv)
     setGUICameraStatus(camera);
 
     // cout << "DEBUG::MAIN::C-CAMERA-F-GV: " << camera.front.x << " " << camera.front.y << " " << camera.front.z << endl;
-    ShadowFrame shadow;
+    ShadowFrame shadowFrame;
     Frame deferredFrame = Frame();
     Frame frame = Frame();
+    ImguiPanel imguiPanel = ImguiPanel();
+    imguiPanel.initinalize(window);
     initialization(window);
 
     // register glfw callback functions
@@ -473,14 +361,16 @@ int main(int argc, char **argv)
 
         processCameraMove(camera);
         processCameraTrackball(camera, window);
-        windowUpdate(frameShader, deferredShader, shadowShader, shader, camera, shadowCamera, deferredFrame, frame, shadow);
-        guiMenu(camera);
+        windowUpdate(frameShader, deferredShader, shadowShader, shader, camera, shadowCamera, 
+            deferredFrame, frame, shadowFrame);
+        imguiPanel.guiMenu(camera, blinnPhongEnabled, directionalShadowEnabled, normalMappingEnabled, 
+            bloomEffectEnabled, effectTestMode, cameraPosition, cameraLookAt, gBufferMode);
 
         // swap buffer from back to front
         glfwSwapBuffers(window);
     }
 
-    menuCleanup();
+    imguiPanel.menuCleanup();
     // just for compatibiliy purposes
     return 0;
 }

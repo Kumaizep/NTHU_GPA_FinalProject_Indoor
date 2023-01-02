@@ -1,9 +1,44 @@
 #ifndef TEXTURE_HPP
 #define TEXTURE_HPP
 
+#define STB_IMAGE_STATIC
+#define STB_IMAGE_IMPLEMENTATION
+#include "STB/stb_image.h"
+
 #include "common.hpp"
 #include "shader.hpp"
 
+static const char* textureTypes[] = {
+    "textureNone",
+    "textureDiffuse", 
+    "textureSpecular", 
+    "textureAmbient", 
+    "textureEmissive", 
+    "textureHeight", 
+    "textureNormal", 
+    "textureShininess", 
+    "textureOpacity", 
+    "textureDisplacement", 
+    "textureLightmap", 
+    "textureReflection", 
+    "textureUnknow"
+};
+
+static const aiTextureType aiTextureTypes[] = {
+    aiTextureType_NONE, 
+    aiTextureType_DIFFUSE, 
+    aiTextureType_SPECULAR, 
+    aiTextureType_AMBIENT, 
+    aiTextureType_EMISSIVE, 
+    aiTextureType_HEIGHT, 
+    aiTextureType_NORMALS, 
+    aiTextureType_SHININESS, 
+    aiTextureType_OPACITY, 
+    aiTextureType_DISPLACEMENT, 
+    aiTextureType_LIGHTMAP, 
+    aiTextureType_REFLECTION, 
+    aiTextureType_UNKNOWN
+};
 
 class Texture
 {
@@ -15,81 +50,13 @@ public:
     int height;
     int colorChannel;
 
-	Texture(const string &filepath, string typeName)
-	{
-		id = loadTexture(filepath, width, height);
-        type = typeName;
-        path = filepath;
-	}
+	Texture(const string &filepath, string typeName);
 
-	GLuint loadTexture(const string &path, int &width, int &height)
-    {  
-        unsigned char *data = stbi_load(path.c_str(), &width, &height, &colorChannel, 0);
+	GLuint loadTexture(const string &path, int &width, int &height);
 
-        std::cout << "DEBUG::TEXTURE::LT::Texture info: w" << width << " h" << height << " ch" << colorChannel << std::endl;
+    int comparePath(const char* filepath);
 
-        GLuint textureID;
-        glGenTextures(1, &textureID);
-
-        if (data)
-        {
-            GLint internalFormat;
-            GLint format;
-            switch (colorChannel) {
-                case 1:
-                    internalFormat = GL_R8;
-                    format = GL_RED;
-                    break;
-                case 2:
-                    internalFormat = GL_RG8;
-                    format = GL_RG;
-                    break;
-                case 3:
-                    internalFormat = GL_RGB8;
-                    format = GL_RGB;
-                    break;
-                case 4:
-                    internalFormat = GL_RGBA8;
-                    format = GL_RGBA;
-                    break;
-                default:
-                    cout << "ERROR::Texture with unknow color channel " << colorChannel << ": " << path << endl;
-                    break;
-            }
-
-            glBindTexture(GL_TEXTURE_2D, textureID);
-            glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        }
-        else
-        {
-            std::cout << "ERROR::Texture failed to load at path: " << path << std::endl;
-        }
-
-        stbi_image_free(data);
-        return textureID;
-    }
-
-    int comparePath(const char* filepath)
-	{
-		return strcmp(path.data(), filepath);
-	}
-
-	void activeAndBind(Shader& shader, GLuint unit)
-	{
-        glActiveTexture(GL_TEXTURE0 + unit);
-        glBindTexture(GL_TEXTURE_2D, id);
-        shader.setInt(("colorChannel" + to_string(unit)).c_str(), colorChannel);
-        // cout << "DEBUG::TEXTURE::AAB::path: " << path << endl;
-        // cout << "DEBUG::TEXTURE::AAB::colorChannel" + to_string(unit) << ": " << colorChannel << endl;
-        // shader.setVec2("textureSizeReciprocal", 1.0f / width, 1.0f / height);
-	}
-	
+	void activeAndBind(Shader& shader, GLuint unit);
 };
 
 #endif
