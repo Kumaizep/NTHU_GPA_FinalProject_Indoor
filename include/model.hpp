@@ -31,10 +31,10 @@ public:
 
     mat4 getModelMatrix();
 
+    vec3 position = vec3(0.0f);
 private:
     vector<Mesh> meshes;
     string directory;
-    vec3 position = vec3(0.0f);
     vec3 scale3D = vec3(1.0f);
     mat4 modelMatrix = mat4(1.0f);
 

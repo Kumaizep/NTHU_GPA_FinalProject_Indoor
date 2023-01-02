@@ -8,7 +8,7 @@ class Shader
 {
 public:
     GLuint program;
-    Shader(const char* vertexPath, const char* fragmentPath);
+    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr);
 
     // activate the shader
     // ------------------------------------------------------------------------

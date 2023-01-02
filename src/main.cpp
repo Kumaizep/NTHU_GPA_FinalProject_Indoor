@@ -32,7 +32,7 @@ bool effectTestMode = false;
 bool effectTestMode2 = false;
 
 bool blinnPhongEnabled = false;
-bool directionalShadowEnabled= false;
+bool directionalShadowEnabled = false;
 bool normalMappingEnabled = false;
 bool bloomEffectEnabled = false;
 
@@ -40,7 +40,6 @@ bool needUpdateFBO = false;
 
 vector<Model> models;
 vector<Model> lights;
-
 
 void initialization(GLFWwindow *window)
 {
@@ -134,7 +133,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, bool shadowMode = false)
     shader.setMat4("um4m", mat4(1.0f));
 
     // point light source
-    vec4 lightpos = camera.getView() * vec4(1.87659f, 0.4625f, 0.103928f, 1);
+    vec4 lightpos = camera.getView() * vec4(lights[0].position, 1);
     shader.setVec3("pointlight.position", vec3(lightpos));
     shader.setFloat("pointlight.constant", 1.0f);
     shader.setFloat("pointlight.linear", 0.7f);
@@ -173,8 +172,9 @@ void display(Shader &shader, Camera &camera, bool shadowMode)
     }
 }
 
-void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowShader, Shader &shader, 
-    Camera &camera, Camera &shadowCamera, Frame &deferredFrame, Frame &frame, ShadowFrame &shadowFrame)
+void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowShader, Shader &pointShadowShader, Shader &shader,
+                  Camera &camera, Camera &shadowCamera,
+                  Frame &deferredFrame, Frame &frame, ShadowFrame &shadowFrame)
 {
     // cout << "DEBUG::MAIN::WU::Shadow position: " << shadowCamera.position.x << " " << shadowCamera.position.y << " " << shadowCamera.position.z << endl;
     if (needUpdateFBO)
@@ -199,8 +199,8 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
         0.0, 0.5, 0.0, 0.0,
         0.0, 0.0, 0.5, 0.0,
         0.5, 0.5, 0.5, 1.0);
-    deferredShader.setMat4("shadow_sbpv", 
-        scale_bias * ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f) * shadowCamera.getView());
+    deferredShader.setMat4("shadow_sbpv",
+                           scale_bias * ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f) * shadowCamera.getView());
     deferredShader.setVec3("dirtectionalShadowPosition", shadowCamera.getPosition());
 
     // Draw scene to frame.FBO
@@ -324,6 +324,8 @@ int main(int argc, char **argv)
         "assets/shader/baseVertex.vs.glsl", "assets/shader/baseFragment.fs.glsl");
     Shader shadowShader(
         "assets/shader/shadowVertex.vs.glsl", "assets/shader/shadowFragment.fs.glsl");
+    Shader pointShadowShader(
+        "assets/shader/pointShadowVertex.vs.glsl", "assets/shader/pointShadowFragment.fs.glsl", "assets/shader/pointShadowGeometry.gs.glsl");
     Shader deferredShader(
         "assets/shader/deferredVertex.vs.glsl", "assets/shader/deferredFragment.fs.glsl");
     Shader frameShader(
@@ -366,12 +368,13 @@ int main(int argc, char **argv)
 
         processCameraMove(camera);
         processCameraTrackball(camera, window);
-        windowUpdate(frameShader, deferredShader, shadowShader, shader, camera, shadowCamera, 
-            deferredFrame, frame, shadowFrame);
+        windowUpdate(frameShader, deferredShader, shadowShader, pointShadowShader, shader,
+                     camera, shadowCamera,
+                     deferredFrame, frame, shadowFrame);
         imguiPanel.setWidth(frameWidth);
         imguiPanel.setHeight(frameHeight);
-        imguiPanel.guiMenu(camera, blinnPhongEnabled, directionalShadowEnabled, normalMappingEnabled, 
-            bloomEffectEnabled, effectTestMode, cameraPosition, cameraLookAt, gBufferMode, directionalShadowPosition);
+        imguiPanel.guiMenu(camera, blinnPhongEnabled, directionalShadowEnabled, normalMappingEnabled,
+                           bloomEffectEnabled, effectTestMode, cameraPosition, cameraLookAt, gBufferMode, directionalShadowPosition);
         shadowCamera.setPosition(directionalShadowPosition);
 
         // swap buffer from back to front

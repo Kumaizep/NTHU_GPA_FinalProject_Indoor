@@ -1,6 +1,6 @@
 #include "shader.hpp"
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath)
+Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath)
 {
     glViewport(INIT_VIEWPORT_X, INIT_VIEWPORT_Y, INIT_WIDTH, INIT_HEIGHT);
     glClearColor(0.0f, 0.3f, 0.0f, 1.00f);
@@ -28,6 +28,18 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
+
+    if (geometryPath)
+    {
+        char **geometryShaderSource = loadShaderSource(geometryPath);
+        GLuint geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+        glShaderSource(geometryShader, 1, geometryShaderSource, NULL);
+        freeShaderSource(geometryShaderSource);
+        glCompileShader(geometryShader);
+        shaderLog(geometryShader);
+        glAttachShader(program, geometryShader);
+    }
+
     glLinkProgram(program);
 
     // Tell OpenGL to use this shader program now
@@ -83,7 +95,7 @@ char** Shader::loadShaderSource(const char* file)
     long sz = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     char *src = new char[sz + 1];
-    fread(src, sizeof(char), sz, fp);
+    auto result = fread(src, sizeof(char), sz, fp);
     src[sz] = '\0';
     char **srcp = new char*[1];
     srcp[0] = src;
