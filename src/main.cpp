@@ -19,7 +19,6 @@ bool trackballEnable = false;
 vec2 mouseCurrent = vec2(0.0f, 0.0f);
 vec2 mouseLast = vec2(0.0f, 0.0f);
 
-int guiMenuWidth = INIT_WIDTH;
 int frameWidth = INIT_WIDTH;
 int frameHeight = INIT_HEIGHT;
 
@@ -225,7 +224,7 @@ void windowUpdate(Shader &frameShader, Shader &deferredShader, Shader &shadowSha
 void reshapeResponse(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
-    frameWidth = guiMenuWidth = width;
+    frameWidth = width;
     frameHeight = height;
     needUpdateFBO = true;
 }
@@ -339,7 +338,7 @@ int main(int argc, char **argv)
     ShadowFrame shadowFrame;
     Frame deferredFrame = Frame();
     Frame frame = Frame();
-    ImguiPanel imguiPanel = ImguiPanel();
+    ImguiPanel imguiPanel = ImguiPanel(INIT_WIDTH, INIT_HEIGHT);
     imguiPanel.initinalize(window);
     initialization(window);
 
@@ -363,6 +362,8 @@ int main(int argc, char **argv)
         processCameraTrackball(camera, window);
         windowUpdate(frameShader, deferredShader, shadowShader, shader, camera, shadowCamera, 
             deferredFrame, frame, shadowFrame);
+        imguiPanel.setWidth(frameWidth);
+        imguiPanel.setHeight(frameHeight);
         imguiPanel.guiMenu(camera, blinnPhongEnabled, directionalShadowEnabled, normalMappingEnabled, 
             bloomEffectEnabled, effectTestMode, cameraPosition, cameraLookAt, gBufferMode);
 

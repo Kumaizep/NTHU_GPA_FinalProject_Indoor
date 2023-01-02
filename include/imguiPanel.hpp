@@ -11,7 +11,7 @@
 class ImguiPanel
 {
 public:
-    ImguiPanel();
+    ImguiPanel(int width, int height = 0);
     ~ImguiPanel();
 
     void initinalize(GLFWwindow *window);
@@ -21,6 +21,14 @@ public:
         float *cameraPosition, float *cameraLookAt, int &gBufferMode);
 
     void menuCleanup();
+
+    void setWidth(int val);
+    void setHeight(int val);
+private:
+    int width;
+    int height;
+
+    void setupStyle();
 };
 
 #endif
