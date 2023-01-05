@@ -7,6 +7,7 @@ Frame::Frame()
     
     createFrameTextureObject();
     createGBufferTextureObject();
+    createDeepBuffer();
 
     createFrameRenderObject();
 
@@ -37,6 +38,8 @@ void Frame::draw(Shader& shader)
     // for (auto& it: filterTextures) {
     //     it.activeAndBind(shader, unit++);
     // }
+    glActiveTexture(GL_TEXTURE10);
+    glBindTexture(GL_TEXTURE_2D, depthRenderBuffer);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
 }
@@ -72,6 +75,8 @@ void Frame::createFrameTextureObject()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, frameWidth, frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, FBT, 0);
 }
@@ -121,6 +126,14 @@ void Frame::createGBufferTextureObject()
         GL_COLOR_ATTACHMENT7
     };
     glDrawBuffers(G_BUFFER_NUM + 1, attachments);
+}
+
+void Frame::createDeepBuffer()
+{
+    glGenRenderbuffers(1, &depthRenderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthRenderBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, frameWidth, frameHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBuffer);
 }
 
 void Frame::createFrameRenderObject()

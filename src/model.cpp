@@ -22,6 +22,19 @@ Model& Model::withScale(vec3 val)
     return *this;
 }
 
+void Model::setPosition(vec3 val)
+{
+    if (position != val)
+        modelMatrix = translate(mat4(1.0f), val) * scale(mat4(1.0f), scale3D);
+    position = val;
+}
+
+vec3 Model::getPosition()
+{
+    return position;
+}
+
+
 void Model::draw(Shader& shader)
 {
     // cout << "DEBUG::MODEL::C-MODEL-F-D: " << meshes.size() << endl;

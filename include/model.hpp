@@ -21,20 +21,25 @@ struct ImageData
 class Model 
 {
 public:
+
     Model(const string path);
 
     Model& withPosition(vec3 val);
 
     Model& withScale(vec3 val);
 
+    void setPosition(vec3 val);
+
+    vec3 getPosition();
+
     void draw(Shader& shader);
 
     mat4 getModelMatrix();
 
 private:
+    vec3 position = vec3(0.0f);
     vector<Mesh> meshes;
     string directory;
-    vec3 position = vec3(0.0f);
     vec3 scale3D = vec3(1.0f);
     mat4 modelMatrix = mat4(1.0f);
 

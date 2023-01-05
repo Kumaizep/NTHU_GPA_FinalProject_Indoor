@@ -50,13 +50,20 @@ public:
     int height;
     int colorChannel;
 
-	Texture(const string &filepath, string typeName);
+    Texture();
+
+    Texture(const string &filepath, string typeName);
 
 	GLuint loadTexture(const string &path, int &width, int &height);
 
     int comparePath(const char* filepath);
 
 	void activeAndBind(Shader& shader, GLuint unit);
+
+    void generateRandomNoise();
+
+private:
+    GLuint RandomNoise();
 };
 
 #endif

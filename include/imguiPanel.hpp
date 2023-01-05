@@ -17,14 +17,26 @@ public:
 
     void initinalize(GLFWwindow *window);
 
-    void guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directionalShadowEnabled,
-        bool &normalMappingEnabled, bool &bloomEffectEnabled, bool &effectTestMode, 
-        float *cameraPosition, float *cameraLookAt, int &gBufferMode, vec3 &directionalShadowPosition);
+    void guiMenu(
+        Camera &camera, 
+        bool &blinnPhongEnabled, 
+        bool &directionalShadowEnabled, 
+        bool &pointShadowEnabled,
+        bool &normalMappingEnabled, 
+        bool &bloomEffectEnabled, 
+        bool &effectTestMode, 
+        bool& SSAOEnable,
+        float *cameraPosition, 
+        float *cameraLookAt, 
+        int &gBufferMode, 
+        vec3 &directionalShadowPosition,
+        vec3 &pointShadowPosition);
 
     void menuCleanup();
 
     void setWidth(int val);
     void setHeight(int val);
+
 private:
     int width;
     int height;

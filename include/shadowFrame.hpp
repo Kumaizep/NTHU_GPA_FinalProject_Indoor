@@ -10,8 +10,9 @@ struct ShadowFrame
     // For Frame Buffer Object(FBO)
     GLuint FBO;
     GLuint depth_tex;
+    bool isPointLight;
 
-    ShadowFrame();
+    ShadowFrame(bool ipl);
 
     void enable();
 

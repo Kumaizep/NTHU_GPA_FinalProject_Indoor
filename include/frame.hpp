@@ -34,6 +34,7 @@ public:
 private:
     GLuint GBuffer[G_BUFFER_NUM];
     GLuint quadVAO;
+    GLuint depthRenderBuffer;
     vector<Texture> filterTextures;
 
     int frameWidth = INIT_WIDTH;
@@ -44,6 +45,9 @@ private:
     void bindGbufferTexture(int index, GLint internalformat, GLenum format, GLenum type);
 
     void createGBufferTextureObject();
+
+    void createDeepBuffer();
+
 
     void createFrameRenderObject();
 

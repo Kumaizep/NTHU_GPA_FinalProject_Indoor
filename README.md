@@ -11,8 +11,8 @@
 
 ### Advanced Checkpoint
 
-- [ ] Screen Space Ambient Occlusion (SSAO)
-- [ ] Point light shadow
+- [x] Screen Space Ambient Occlusion (SSAO)
+- [x] Point light shadow
 - [ ] Screen space reflection
 - [ ] Non photorealistic rendering
 - [ ] Fast Approximate Anti-Aliasing (FXAA)

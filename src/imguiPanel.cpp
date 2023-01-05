@@ -1,7 +1,7 @@
 #include "imguiPanel.hpp"
 
-ImguiPanel::ImguiPanel(int width, int height) : width(width), height(height){}
-ImguiPanel::~ImguiPanel(){}
+ImguiPanel::ImguiPanel(int width, int height) : width(width), height(height) {}
+ImguiPanel::~ImguiPanel() {}
 
 void ImguiPanel::initinalize(GLFWwindow *window)
 {
@@ -21,9 +21,20 @@ void ImguiPanel::initinalize(GLFWwindow *window)
     setupStyle();
 }
 
-void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directionalShadowEnabled,
-    bool &normalMappingEnabled, bool &bloomEffectEnabled, bool &effectTestMode, 
-    float *cameraPosition, float *cameraLookAt, int &gBufferMode, vec3 &directionalShadowPosition)
+void ImguiPanel::guiMenu(
+    Camera &camera, 
+    bool &blinnPhongEnabled, 
+    bool &directionalShadowEnabled, 
+    bool &pointShadowEnabled,
+    bool &normalMappingEnabled, 
+    bool &bloomEffectEnabled, 
+    bool &effectTestMode, 
+    bool& SSAOEnabled,
+    float *cameraPosition, 
+    float *cameraLookAt, 
+    int &gBufferMode, 
+    vec3 &directionalShadowPosition,
+    vec3 &pointShadowPosition)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -75,6 +86,8 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
         ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
         ImGui::SameLine();
         ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
+        if (!bloomEffectEnabled)
+            pointShadowEnabled = false;
 
         if (ImGui::TreeNode("Directional shadow light source Controller"))
         {
@@ -111,8 +124,10 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
             ImGui::RadioButton("Diffuse", &gBufferMode, 4);
             ImGui::SameLine();
             ImGui::RadioButton("Specular", &gBufferMode, 5);
+            // ImGui::SameLine();
+            // ImGui::RadioButton("Disable", &gBufferMode, 6);
             ImGui::SameLine();
-            ImGui::RadioButton("Disable", &gBufferMode, 6);
+            ImGui::RadioButton("Devlope Mode", &gBufferMode, 7);
 
             ImGui::TreePop();
         }
@@ -121,7 +136,34 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
     }
     if (ImGui::TreeNode("Advanced"))
     {
-        // Expose a couple of the available flags. In most cases you may just call BeginTabBar() with no flags (0).
+        ImGui::Checkbox("SSAO", &SSAOEnabled);
+        ImGui::SameLine();
+        ImGui::Checkbox("Point Light Shadow", &pointShadowEnabled);
+        if (pointShadowEnabled)
+            bloomEffectEnabled = true;
+
+        if (ImGui::TreeNode("Point shadow light source Controller"))
+        {
+            if (pointShadowEnabled)
+            {
+                ImGui::Text("X ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##DSLS-X", &pointShadowPosition.x, -15.0f, 15.0f);
+                ImGui::Text("Y ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##DSLS-Y", &pointShadowPosition.y, -15.0f, 15.0f);
+                ImGui::Text("Z ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##DSLS-Z", &pointShadowPosition.z, -15.0f, 15.0f);
+            }
+            else
+            {
+                ImGui::Text(" Point shadow is disabled. Enable it first.");
+            }
+            
+            ImGui::TreePop();
+        }
+
         ImGui::TreePop();
     }
 

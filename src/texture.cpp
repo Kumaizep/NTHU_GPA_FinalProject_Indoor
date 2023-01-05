@@ -1,5 +1,11 @@
 #include "texture.hpp"
 
+Texture::Texture()
+{
+    type = "textureUnknow";
+    path = "##NULL";
+}
+
 Texture::Texture(const string &filepath, string typeName)
 {
     id = loadTexture(filepath, width, height);
@@ -73,4 +79,34 @@ void Texture::activeAndBind(Shader& shader, GLuint unit)
     // cout << "DEBUG::TEXTURE::AAB::path: " << path << endl;
     // cout << "DEBUG::TEXTURE::AAB::colorChannel" + to_string(unit) << ": " << colorChannel << endl;
     // shader.setVec2("textureSizeReciprocal", 1.0f / width, 1.0f / height);
+}
+
+void Texture::generateRandomNoise()
+{
+    id = RandomNoise();
+}
+
+GLuint Texture::RandomNoise()
+{
+    vec3 noiseData[16];
+    srand(time(NULL));
+    for (int i = 0; i < 16; ++i)
+    {
+        noiseData[i] = normalize(vec3(
+                rand() / (float)RAND_MAX * 2.0 - 1.0, // -1.0 ~ 1.0
+                rand() / (float)RAND_MAX * 2.0 - 1.0, // -1.0 ~ 1.0
+                0.0f
+            ));
+    }
+
+    GLuint noiseMap;
+    glGenTextures(1, &noiseMap);
+    glBindTexture(GL_TEXTURE_2D, noiseMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 4, 4, 0, GL_RGB, GL_FLOAT, &noiseData[0][0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    return noiseMap;
 }
