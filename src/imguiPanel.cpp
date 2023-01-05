@@ -1,7 +1,7 @@
 #include "imguiPanel.hpp"
 
-ImguiPanel::ImguiPanel(int width, int height) : width(width), height(height){}
-ImguiPanel::~ImguiPanel(){}
+ImguiPanel::ImguiPanel(int width, int height) : width(width), height(height) {}
+ImguiPanel::~ImguiPanel() {}
 
 void ImguiPanel::initinalize(GLFWwindow *window)
 {
@@ -21,9 +21,9 @@ void ImguiPanel::initinalize(GLFWwindow *window)
     setupStyle();
 }
 
-void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directionalShadowEnabled,
-    bool &normalMappingEnabled, bool &bloomEffectEnabled, bool &effectTestMode, 
-    float *cameraPosition, float *cameraLookAt, int &gBufferMode, vec3 &directionalShadowPosition)
+void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directionalShadowEnabled, bool &pointShadowEnabled,
+                         bool &normalMappingEnabled, bool &bloomEffectEnabled, bool &effectTestMode,
+                         float *cameraPosition, float *cameraLookAt, int &gBufferMode, vec3 &directionalShadowPosition)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -31,13 +31,12 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
 
     ImGui::SetNextWindowSize(ImVec2(width - 10, 0));
     ImGui::SetNextWindowPos(ImVec2(-1 + 5, 0 + 5));
-    ImGui::Begin("Menu", NULL, ImGuiWindowFlags_None 
-                // | ImGuiWindowFlags_NoTitleBar 
-                // | ImGuiWindowFlags_NoBringToFrontOnFocus 
-                // | ImGuiWindowFlags_NoBackground 
-                | ImGuiWindowFlags_NoMove
-                | ImGuiWindowFlags_NoResize 
-                // | ImGuiWindowFlags_MenuBar 
+    ImGui::Begin("Menu", NULL, ImGuiWindowFlags_None
+                                   // | ImGuiWindowFlags_NoTitleBar
+                                   // | ImGuiWindowFlags_NoBringToFrontOnFocus
+                                   // | ImGuiWindowFlags_NoBackground
+                                   | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize
+                 // | ImGuiWindowFlags_MenuBar
     );
     // ImGui::SameLine();
     // ImGui::Checkbox("Test Mode2", &effectTestMode2);
@@ -67,10 +66,15 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
         ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
         if (!blinnPhongEnabled)
             directionalShadowEnabled = false;
+        if (!bloomEffectEnabled)
+            pointShadowEnabled = false;
         ImGui::SameLine();
         ImGui::Checkbox("Directional Shadow", &directionalShadowEnabled);
+        ImGui::Checkbox("Point Light Shadow", &pointShadowEnabled);
         if (directionalShadowEnabled)
             blinnPhongEnabled = true;
+        if (pointShadowEnabled)
+            bloomEffectEnabled = true;
         ImGui::SameLine();
         ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
         ImGui::SameLine();
@@ -94,7 +98,7 @@ void ImguiPanel::guiMenu(Camera &camera, bool &blinnPhongEnabled, bool &directio
             {
                 ImGui::Text(" Directional shadow is disabled. Enable it first.");
             }
-            
+
             ImGui::TreePop();
         }
 
@@ -150,8 +154,8 @@ void ImguiPanel::setHeight(int val)
 
 void ImguiPanel::setupStyle()
 {
-    ImGuiStyle * style = &ImGui::GetStyle();
- 
+    ImGuiStyle *style = &ImGui::GetStyle();
+
     style->WindowPadding = ImVec2(15, 15);
     style->WindowRounding = 5.0f;
     style->FramePadding = ImVec2(5, 5);
@@ -163,7 +167,7 @@ void ImguiPanel::setupStyle()
     style->ScrollbarRounding = 9.0f;
     style->GrabMinSize = 5.0f;
     style->GrabRounding = 3.0f;
- 
+
     // style->Colors[ImGuiCol_Text] = ImVec4(0.80f, 0.80f, 0.83f, 1.00f);
     // style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
     style->Colors[ImGuiCol_WindowBg] = ImVec4(1.0f, 1.0f, 1.0f, 0.5f);
