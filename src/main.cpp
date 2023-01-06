@@ -38,15 +38,12 @@ bool pointShadowEnabled = false;
 bool normalMappingEnabled = false;
 bool bloomEffectEnabled = false;
 bool SSAOEnabled = false;
+bool FXAAEnabled = false;
 
 bool needUpdateFBO = false;
 
 vector<Model> models;
 vector<Model> lights;
-
-GLuint uboSSAOKernal;
-
-Texture noiseTexture;
 
 vector<vec3> ssaoKernel;
 
@@ -58,6 +55,8 @@ Shader pointShadowShader;
 Shader SSAOShader;
 Shader deferredShader;
 Shader frameShader;
+Shader FXAAShader;
+Shader FXAAShader2;
 
 float calcLerp(float a, float b, float f)
 {
@@ -110,8 +109,6 @@ void initialization(GLFWwindow *window)
     kernelGeneration();
     tempNoiseGen();
 
-    noiseTexture.generateRandomNoise();
-
     models.push_back(Model("assets/indoor/Grey_White_Room.obj"));
     models.push_back(Model("assets/indoor/trice.obj")
                          .withPosition(vec3(2.05, 0.628725, -1.9))
@@ -136,6 +133,8 @@ void initialization(GLFWwindow *window)
         "assets/shader/deferredVertex.vs.glsl", "assets/shader/deferredFragment.fs.glsl");
     frameShader = Shader(
         "assets/shader/frameVertex.vs.glsl", "assets/shader/frameFragment.fs.glsl");
+    FXAAShader = Shader(
+        "assets/shader/FXAAVertex.vs.glsl", "assets/shader/FXAAFragment.fs.glsl");
 }
 
 void timerUpdate()
@@ -258,6 +257,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
     shader.setBool("normalMappingEnabled", normalMappingEnabled);
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
     shader.setBool("SSAOEnabled", SSAOEnabled);
+    shader.setBool("FXAAEnabled", FXAAEnabled);
     shader.setBool("effectTestMode", effectTestMode);
 
     // others
@@ -320,7 +320,7 @@ void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &fr
                             scale_bias * ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 10.0f) * shadowCamera.getView());
     deferredShader.setVec3("dirtectionalShadowPosition", shadowCamera.getPosition());
 
-    // Draw scene to frame0.FBO
+    // rander scene to G-buffers.
     glViewport(0, 0, frameWidth, frameHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, frame0.FBO);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -328,7 +328,7 @@ void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &fr
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     display(baseShader, camera);
 
-    // Draw frame with SSAOShader to frame1.FBO
+    // generate SSAO and rander to G-buffers.
     glBindFramebuffer(GL_FRAMEBUFFER, frame1.FBO);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -340,7 +340,7 @@ void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &fr
         SSAOShader.setVec3(("sampleKernel[" + to_string(i) + "]").c_str(), ssaoKernel[i]);
     frame0.draw(SSAOShader);
 
-    // Draw frame with deferredShader to frame0.FBO
+    // using G-buffers to do deferred shading
     glBindFramebuffer(GL_FRAMEBUFFER, frame0.FBO);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -348,13 +348,22 @@ void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &fr
     setupShaderUniform(deferredShader, camera);
     frame1.draw(deferredShader);
 
-    // Draw frame with frameShader to window
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // render post-processing effects
+    glBindFramebuffer(GL_FRAMEBUFFER, frame1.FBO);
     glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     setupShaderUniform(frameShader, camera);
     frame0.draw(frameShader);
+
+    // FXAA effects
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    setupShaderUniform(FXAAShader, camera);
+    frame1.draw(FXAAShader);
+    
 }
 
 void reshapeResponse(GLFWwindow *window, int width, int height)
@@ -488,9 +497,10 @@ int main(int argc, char **argv)
             bloomEffectEnabled, 
             effectTestMode, 
             SSAOEnabled, 
+            FXAAEnabled, 
+            gBufferMode, 
             cameraPosition, 
             cameraLookAt, 
-            gBufferMode, 
             directionalShadowPosition,
             pointShadowPosition);
         shadowCamera.setPosition(directionalShadowPosition);

@@ -25,10 +25,11 @@ public:
         bool &normalMappingEnabled, 
         bool &bloomEffectEnabled, 
         bool &effectTestMode, 
-        bool& SSAOEnable,
+        bool& SSAOEnable, 
+        bool &FXAAEnabled, 
+        int &gBufferMode, 
         float *cameraPosition, 
         float *cameraLookAt, 
-        int &gBufferMode, 
         vec3 &directionalShadowPosition,
         vec3 &pointShadowPosition);
 

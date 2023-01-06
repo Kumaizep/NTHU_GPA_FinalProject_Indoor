@@ -29,10 +29,11 @@ void ImguiPanel::guiMenu(
     bool &normalMappingEnabled, 
     bool &bloomEffectEnabled, 
     bool &effectTestMode, 
-    bool& SSAOEnabled,
+    bool &SSAOEnabled, 
+    bool &FXAAEnabled,
+    int &gBufferMode, 
     float *cameraPosition, 
     float *cameraLookAt, 
-    int &gBufferMode, 
     vec3 &directionalShadowPosition,
     vec3 &pointShadowPosition)
 {
@@ -85,9 +86,11 @@ void ImguiPanel::guiMenu(
         ImGui::SameLine();
         ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
         ImGui::SameLine();
-        ImGui::Checkbox("Bloom effect", &bloomEffectEnabled);
+        ImGui::Checkbox("Bloom Effect", &bloomEffectEnabled);
         if (!bloomEffectEnabled)
             pointShadowEnabled = false;
+        ImGui::SameLine();
+        ImGui::Checkbox("Test Mode", &effectTestMode);
 
         if (ImGui::TreeNode("Directional shadow light source Controller"))
         {
@@ -141,6 +144,8 @@ void ImguiPanel::guiMenu(
         ImGui::Checkbox("Point Light Shadow", &pointShadowEnabled);
         if (pointShadowEnabled)
             bloomEffectEnabled = true;
+        ImGui::SameLine();
+        ImGui::Checkbox("FXAA", &FXAAEnabled);
 
         if (ImGui::TreeNode("Point shadow light source Controller"))
         {

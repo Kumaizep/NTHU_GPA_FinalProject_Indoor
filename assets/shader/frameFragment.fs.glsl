@@ -1,7 +1,10 @@
 #version 450
 
 in vec2 texCoords;
-out vec4 fragColor;
+
+layout(location = 0) out vec4 color0;
+layout(location = 1) out vec4 color1;
+
 
 layout(binding = 0) uniform sampler2D texture0;
 layout(binding = 1) uniform sampler2D texture1;
@@ -40,11 +43,30 @@ vec4 blurHDR()
 	return sum;
 }
 
+vec4 blurMID()
+{
+	const int blurRangeHalf = 3;
+    const int blurRange = 2 * blurRangeHalf + 1;
+    const vec2 textureSizeReciprocal = 1.0 / frameSize;
+
+    vec4 blurColor = vec4(0.0f);
+    for (int i = 0; i < blurRange; ++i)
+    {
+        for (int j = 0; j < blurRange; ++j)
+        {
+            vec2 tc = texCoords + textureSizeReciprocal * vec2(float(i - blurRangeHalf), float(j - blurRangeHalf));
+            blurColor += blurHDRColor(tc) / blurRange / blurRange;
+        }
+    }
+
+    return blurColor;
+}
+
 void draw(){
-	fragColor = texture(texture0, texCoords);
+	color0 = texture(texture0, texCoords);
 	if (bloomEffectEnabled)
 	{
-		fragColor += blurHDR();
+		color0 += blurMID() * 0.9 + blurHDR() * 0.7;
 	}
 }
 

@@ -15,6 +15,6 @@
 - [x] Point light shadow
 - [ ] Screen space reflection
 - [ ] Non photorealistic rendering
-- [ ] Fast Approximate Anti-Aliasing (FXAA)
+- [x] Fast Approximate Anti-Aliasing (FXAA)
 - [ ] Area light
 - [ ] Volumetric light
