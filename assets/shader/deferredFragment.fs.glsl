@@ -72,7 +72,7 @@ vec4 blinnNPR(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
 {
 	if(NPREnabled)
 	{
-		float light = floor(dot(N, L) * 3) / 3;
+		float light = ceil(dot(N, L) * 3) / 3;
 		return texture(texture4, texCoords)*light*shadow;
 	}
 	else

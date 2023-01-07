@@ -62,8 +62,6 @@ vec4 blurMID()
     return blurColor;
 }
 
-int sobelHorizontal[9] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
-int sobelVertical[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
 
 float sobel(int sobelMat[9])
 {
@@ -89,7 +87,9 @@ void draw()
     }
     if (NPREnabled)
     {
-        float edge = abs(sobel(sobelHorizontal)) + abs(sobel(sobelVertical));
+		int sobelHorizontal[9] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
+		int sobelVertical[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
+        float edge = sqrt(pow(sobel(sobelHorizontal),2) + pow(sobel(sobelVertical),2));
 		if(edge > 0.5)
 			color0 = vec4(0.0f,0.0f,0.0f,1.0f);
     }
