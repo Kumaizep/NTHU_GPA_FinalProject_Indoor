@@ -43,6 +43,7 @@ bool bloomEffectEnabled = false;
 bool SSAOEnabled = false;
 bool FXAAEnabled = false;
 bool NPREnabled = false;
+bool SSREnabled = false;
 bool areaLightEnabled = false;
 
 bool needUpdateFBO = false;
@@ -266,6 +267,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
     shader.setBool("SSAOEnabled", SSAOEnabled);
     shader.setBool("NPREnabled", NPREnabled);
+    shader.setBool("SSREnabled", SSREnabled);
     shader.setBool("FXAAEnabled", FXAAEnabled);
     shader.setBool("areaLightEnabled", areaLightEnabled);
     shader.setBool("effectTestMode", effectTestMode);
@@ -294,7 +296,7 @@ void display(Shader &shader, Camera &camera, s_mode shadowMode = off)
         }
     }
 
-    if (areaLightEnabled)
+    if (areaLightEnabled && shadowMode == off)
     {
         shader.setInt("lightMode", 2);
         areaLight.drawModel(shader);
@@ -515,6 +517,7 @@ int main(int argc, char **argv)
             effectTestMode, 
             SSAOEnabled, 
             NPREnabled, 
+            SSREnabled, 
             FXAAEnabled, 
             areaLightEnabled, 
             gBufferMode, 

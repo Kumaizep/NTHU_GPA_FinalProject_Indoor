@@ -80,6 +80,7 @@ void deferredDraw()
 			else
 			{
 				Kdiffuse = texture(texture0, vertexData.texcoord).rrra;
+				renderType = 4;
 			}
 
 			if(Kdiffuse.a < 0.5)

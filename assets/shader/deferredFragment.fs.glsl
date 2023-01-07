@@ -3,6 +3,12 @@
 in vec2 texCoords;
 layout(location = 0) out vec4 color0;
 layout(location = 1) out vec4 color1;
+layout(location = 2) out vec4 color2;
+layout(location = 3) out vec4 color3;
+layout(location = 4) out vec4 color4;
+layout(location = 5) out vec4 color5;
+layout(location = 6) out vec4 color6;
+layout(location = 7) out vec4 color7;
 
 layout(binding = 0) uniform sampler2D texture0; 		// Default
 layout(binding = 1) uniform sampler2D texture1; 		// world space vertex, shininess
@@ -93,7 +99,7 @@ vec4 blinnNPR(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
 {
 	if(NPREnabled)
 	{
-		float light = ceil(dot(N, L) * 3) / 3;
+		float light = ceil(max(dot(N, L) * 3,0)) / 3;
 		return texture(texture4, texCoords) * light * shadow;
 	}
 	else
@@ -352,7 +358,7 @@ void defaultDraw()
 		if (bloomEffectEnabled)
 		{
 			// Blinn Phong render
-			if (renderType == 0)
+			if (renderType == 0 || renderType == 4)
 			{
 				color0 += CalcPointLight(N, pointlight, P.xyz, SSAO);
 			}
@@ -431,7 +437,18 @@ void gBufferDraw()
 	}
 }
 
+void copyColor()
+{
+	color1 = texture(texture1, texCoords);
+	color2 = texture(texture2, texCoords);
+	color3 = texture(texture3, texCoords);
+	color4 = texture(texture4, texCoords);
+	color5 = texture(texture5, texCoords);
+	color6 = texture(texture6, texCoords);
+	color7 = texture(texture7, texCoords);
+}
 void main()
 {
 	gBufferDraw();
+	copyColor();
 }
