@@ -42,7 +42,7 @@ bool normalMappingEnabled = false;
 bool bloomEffectEnabled = false;
 bool SSAOEnabled = false;
 bool FXAAEnabled = false;
-bool areaLightEnabled = true;
+bool areaLightEnabled = false;
 
 bool needUpdateFBO = false;
 
