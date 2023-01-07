@@ -29,6 +29,7 @@ uniform bool pointShadowEnabled;
 uniform bool normalMappingEnabled;
 uniform bool bloomEffectEnabled;
 uniform bool SSAOEnabled;
+uniform bool NPREnabled;
 
 uniform mat4 um4v;
 uniform mat4 um4p;
@@ -67,6 +68,17 @@ vec4 blinnPhong(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
 	return vec4(ambient * SSAO + shadow * (diffuse + specular) , 1.0f);
 }
 
+vec4 blinnNPR(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
+{
+	if(NPREnabled)
+	{
+		float light = floor(dot(N, L) * 3) / 3;
+		return texture(texture4, texCoords)*light*shadow;
+	}
+	else
+		return blinnPhong(N,L,H,shadow,SSAO);
+}
+
 float ShadowCalculation()
 {
     // get vector between fragment position and light position
@@ -93,8 +105,8 @@ vec4 CalcPointLight(vec3 N, PointLight light, vec3 P, vec3 SSAO)
 	
     vec3 H = normalize(lightDir - normalize(P));
     if(pointShadowEnabled)
-    	return blinnPhong(N, lightDir, H, ShadowCalculation(), SSAO) * attenuation;
-    return blinnPhong(N, lightDir, H, 1.0f, SSAO) * attenuation;
+    	return blinnNPR(N, lightDir, H, ShadowCalculation(), SSAO) * attenuation;
+    return blinnNPR(N, lightDir, H, 1.0f, SSAO) * attenuation;
 }
 
 vec4 CalcPointLightNormalMap(vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, vec3 TBNV, 
@@ -108,8 +120,8 @@ vec4 CalcPointLightNormalMap(vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, v
     vec3 H = normalize(TBNL + TBNV);
 
     if(pointShadowEnabled)
-    	return blinnPhong(N, TBNL, H, ShadowCalculation(), SSAO) * attenuation;
-    return blinnPhong(N, TBNL, H, 1.0f, SSAO) * attenuation;
+    	return blinnNPR(N, TBNL, H, ShadowCalculation(), SSAO) * attenuation;
+    return blinnNPR(N, TBNL, H, 1.0f, SSAO) * attenuation;
 }
 
 vec3 blurSSAO() {
@@ -178,9 +190,9 @@ void defaultDraw()
 			vec4 shadow_coord = shadow_sbpv * vec4(texture(texture1, texCoords).xyz,1);
 			float shadow = textureProj(texture8, shadow_coord+ vec4(0,0,-0.02,0));
 			if(directionalShadowEnabled)
-				color0 += blinnPhong(N, L, H, shadow, SSAO);
+				color0 += blinnNPR(N, L, H, shadow, SSAO);
 			else
-				color0 += blinnPhong(N, L, H, 1.0f, SSAO);
+				color0 += blinnNPR(N, L, H, 1.0f, SSAO);
 		}
 		if (bloomEffectEnabled)
 		{

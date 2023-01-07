@@ -26,6 +26,7 @@ public:
         bool &bloomEffectEnabled, 
         bool &effectTestMode, 
         bool& SSAOEnable, 
+        bool& NPREnable, 
         bool &FXAAEnabled, 
         int &gBufferMode, 
         float *cameraPosition, 
