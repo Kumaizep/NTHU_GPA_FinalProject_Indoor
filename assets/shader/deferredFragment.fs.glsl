@@ -94,7 +94,7 @@ vec4 blinnNPR(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
 	if(NPREnabled)
 	{
 		float light = ceil(dot(N, L) * 3) / 3;
-		return texture(texture4, texCoords)*light*shadow;
+		return texture(texture4, texCoords) * light * shadow;
 	}
 	else
 		return blinnPhong(N, L, H, shadow, SSAO);
@@ -384,7 +384,6 @@ void defaultDraw()
 					worldN = normalize(NTBN * texture(texture7, texCoords).xyz);
 				}
 				color0 += areaLightEffect(worldN, vertex, Kd, Ks);
-				// color0 = vec4(worldN, 1.0);
 			}
 		}
 	}
