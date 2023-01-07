@@ -242,8 +242,9 @@ vec3 LTC_Evaluate(vec3 N, vec3 V, vec3 P, mat3 Minv, vec3 points[4])
 
     // Fetch the form factor for horizon clipping
     float scale = texture(texture11, uv).w;
-
-    float sum = len*scale;
+	// TAG: areaLight no shadow
+    //float sum = len*scale;
+    float sum = len;
     if (!behind)
         sum = 0.0;
 
@@ -290,9 +291,9 @@ vec4 areaLightEffect(vec3 N, vec3 P, vec3 Kd, vec3 Ks)
     // t2.y: Smith function for Geometric Attenuation Term, it is dot(V or L, H).
     // specular *= Ks*t2.x + (1.0f - Ks) * t2.y;
 
-    vec3 result = areaLight.color * areaLight.intensity * (Kd * diffuse);
+    vec3 result = areaLight.color * areaLight.intensity * (Kd * ToSRGB(diffuse));
 
-    return vec4(ToSRGB(result), 1.0f);
+    return vec4(result, 1.0f);
 }
 
 void defaultDraw()

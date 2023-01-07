@@ -12,7 +12,7 @@ void AreaLight::initialization(vec3 t, vec3 r)
     LTCTO2 = loadLUTTexture();
 
 	incrementRoughness(0.5f);
-	incrementLightIntensity(1.0f);
+	incrementLightIntensity(1.1f);
 
 	setupAreaLightbuffer();
 }
