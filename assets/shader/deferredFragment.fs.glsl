@@ -31,6 +31,7 @@ uniform bool pointShadowEnabled;
 uniform bool normalMappingEnabled;
 uniform bool bloomEffectEnabled;
 uniform bool SSAOEnabled;
+uniform bool NPREnabled;
 uniform bool areaLightEnabled;
 
 uniform mat4 um4v;
@@ -88,6 +89,18 @@ vec4 blinnPhong(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
 	return vec4(ambient * SSAO + shadow * (diffuse + specular) , 1.0f);
 }
 
+vec4 blinnNPR(vec3 N, vec3 L ,vec3 H, float shadow, vec3 SSAO)
+{
+	if(NPREnabled)
+	{
+		float light = ceil(dot(N, L) * 3) / 3;
+		return texture(texture4, texCoords)*light*shadow;
+	}
+	else
+		return blinnPhong(N, L, H, shadow, SSAO);
+}
+
+
 float ShadowCalculation()
 {
     // get vector between fragment position and light position
@@ -114,8 +127,8 @@ vec4 CalcPointLight(vec3 N, PointLight light, vec3 P, vec3 SSAO)
 	
     vec3 H = normalize(lightDir - normalize(P));
     if(pointShadowEnabled)
-    	return blinnPhong(N, lightDir, H, ShadowCalculation(), SSAO) * attenuation;
-    return blinnPhong(N, lightDir, H, 1.0f, SSAO) * attenuation;
+    	return blinnNPR(N, lightDir, H, ShadowCalculation(), SSAO) * attenuation;
+    return blinnNPR(N, lightDir, H, 1.0f, SSAO) * attenuation;
 }
 
 vec4 CalcPointLightNormalMap(vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, vec3 TBNV, 
@@ -129,8 +142,8 @@ vec4 CalcPointLightNormalMap(vec3 N, PointLight light, vec3 P, vec3 T, vec3 B, v
     vec3 H = normalize(TBNL + TBNV);
 
     if(pointShadowEnabled)
-    	return blinnPhong(N, TBNL, H, ShadowCalculation(), SSAO) * attenuation;
-    return blinnPhong(N, TBNL, H, 1.0f, SSAO) * attenuation;
+    	return blinnNPR(N, TBNL, H, ShadowCalculation(), SSAO) * attenuation;
+    return blinnNPR(N, TBNL, H, 1.0f, SSAO) * attenuation;
 }
 
 vec3 blurSSAO() {
@@ -284,36 +297,33 @@ vec4 areaLightEffect(vec3 N, vec3 P, vec3 Kd, vec3 Ks)
 
 void defaultDraw()
 {
-	vec3 worldP = texture(texture1, texCoords).xyz;
-	vec3 worldN = texture(texture2, texCoords).xyz;
-	vec3 worldT = texture(texture6, texCoords).xyz;
-	vec3 Ka = texture(texture3, texCoords).xyz;
-	vec3 Kd = texture(texture4, texCoords).xyz;
-	vec3 Ks = texture(texture5, texCoords).xyz;
-
-	vec4 eyeP = um4v * vec4(worldP, 1.0);
-	vec4 eyeLP = um4v * vec4(-2.845, 2.028, -1.293, 1.0);
-	if (directionalShadowEnabled)
-		eyeLP = um4v * vec4(dirtectionalShadowPosition, 1.0);
-	vec3 eyeN = mat3(um4v) * worldN;
-
-	vec3 N = normalize(eyeN);
-	vec3 L = normalize(eyeLP.xyz - eyeP.xyz);
-	vec3 V = normalize(-eyeP.xyz);
-	vec3 H = normalize(L + V);
-	vec3 T = normalize(mat3(um4v) * worldT);
-	vec3 B = cross(N, T);
-	mat3 TBN = mat3(T, B, N);
-	vec3 originN = N;
+	vec3 vertex = texture(texture1, texCoords).xyz;
+	vec3 normal = texture(texture2, texCoords).xyz;
+	vec3 tangent = texture(texture6, texCoords).xyz;
 	vec3 SSAO = blurSSAO();
+
+	vec4 P = um4v * vec4(vertex, 1.0);
+	vec4 LW = um4v * vec4(-2.845, 2.028, -1.293, 1.0);
+	if (directionalShadowEnabled)
+		LW = um4v * vec4(dirtectionalShadowPosition, 1.0);
+	// Eye space to tangent space TBN
+	vec3 N = normalize(mat3(um4v) * normal);
+	vec3 L = normalize(LW.xyz - P.xyz);
+	vec3 V = normalize(-P.xyz);
+	vec3 H = normalize(L + V);
+	vec3 T = vec3(0.0);
+	vec3 B = vec3(0.0);
+	vec3 originN = N;
 
 
 	float renderType = texture(texture2, texCoords).w;
 	if (renderType == 1)
 	{
 		// Modify parameter for the case normal mapping enabled
-		L = normalize(TBN * L);
-		V = normalize(TBN * V);
+		T = normalize(mat3(um4v) * tangent);
+		B = cross(N, T);
+		L = normalize(vec3(dot(L, T), dot(L, B), dot(L, N)));
+		V = normalize(vec3(dot(V, T), dot(V, B), dot(V, N)));
 		H = normalize(L + V);
 		N = texture(texture7, texCoords).xyz;
 	}
@@ -334,20 +344,20 @@ void defaultDraw()
 			vec4 shadow_coord = shadow_sbpv * vec4(texture(texture1, texCoords).xyz,1);
 			float shadow = textureProj(texture8, shadow_coord+ vec4(0,0,-0.02,0));
 			if(directionalShadowEnabled)
-				color0 += blinnPhong(N, L, H, shadow, SSAO);
+				color0 += blinnNPR(N, L, H, shadow, SSAO);
 			else
-				color0 += blinnPhong(N, L, H, 1.0f, SSAO);
+				color0 += blinnNPR(N, L, H, 1.0f, SSAO);
 		}
 		if (bloomEffectEnabled)
 		{
 			// Blinn Phong render
 			if (renderType == 0)
 			{
-				color0 += CalcPointLight(N, pointlight, eyeP.xyz, SSAO);
+				color0 += CalcPointLight(N, pointlight, P.xyz, SSAO);
 			}
 			else if (renderType == 1)
 			{
-				color0 += CalcPointLightNormalMap(N, pointlight, eyeP.xyz, T, B, V, originN, SSAO);
+				color0 += CalcPointLightNormalMap(N, pointlight, P.xyz, T, B, V, originN, SSAO);
 			}
 			else if (renderType == 2)
 			{
@@ -362,15 +372,19 @@ void defaultDraw()
 			}
 			else
 			{
+				vec3 worldN = normalize(normal);
+				vec3 Kd = texture(texture4, texCoords).xyz;
+				vec3 Ks = texture(texture5, texCoords).xyz;
 				if (renderType == 1)
 				{
-					N = normalize(worldN);
-					T = normalize(worldT);
-					B = cross(N, T);
-					mat3 TBN = mat3(T, B, N);
-					worldN = TBN * texture(texture7, texCoords).xyz;
+					vec3 NN = normalize(normal);
+					vec3 NT = normalize(tangent);
+					vec3 NB = cross(NN, NT);
+					mat3 NTBN = mat3(NT, NB, NN);
+					worldN = normalize(NTBN * texture(texture7, texCoords).xyz);
 				}
-				color0 += areaLightEffect(worldN, worldP, Kd, Ks);
+				color0 += areaLightEffect(worldN, vertex, Kd, Ks);
+				// color0 = vec4(worldN, 1.0);
 			}
 		}
 	}

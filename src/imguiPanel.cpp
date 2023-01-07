@@ -30,6 +30,7 @@ void ImguiPanel::guiMenu(
     bool &bloomEffectEnabled, 
     bool &effectTestMode, 
     bool &SSAOEnabled, 
+    bool &NPREnabled, 
     bool &FXAAEnabled,
     bool &areaLightEnabled,
     int &gBufferMode, 
@@ -143,6 +144,8 @@ void ImguiPanel::guiMenu(
     if (ImGui::TreeNode("Advanced"))
     {
         ImGui::Checkbox("SSAO", &SSAOEnabled);
+        ImGui::SameLine();
+        ImGui::Checkbox("NPR", &NPREnabled);
         ImGui::SameLine();
         ImGui::Checkbox("Point Light Shadow", &pointShadowEnabled);
         if (pointShadowEnabled)

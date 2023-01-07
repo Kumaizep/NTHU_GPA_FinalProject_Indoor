@@ -19,12 +19,13 @@ uniform vec2 frameSize;
 uniform int gBufferMode;
 uniform bool effectTestMode;
 uniform bool bloomEffectEnabled;
+uniform bool NPREnabled;
 
 vec4 blurHDRColor(vec2 tc)
 {
 	vec4 result = texture(texture0, tc);
-	float brightness = dot(result, vec4(0.2126, 0.7152, 0.0722,0));
-	if(result.w > 90.0)
+	float brightness = dot(result, vec4(0.2126, 0.7152, 0.0722, 0));
+	if (result.w > 90.0)
 		return result;
 	else
 		return vec4(0.0, 0.0, 0.0, 0.0);
@@ -37,7 +38,7 @@ vec4 blurHDR()
 	for (int i = 0; i < 5; ++i)
 		for (int j = 0; j < 5; ++j)
 		{
-			vec2 tc = texCoords + vec2(float(i - 2), float(j - 2))/frameSize;
+			vec2 tc = texCoords + vec2(float(i - 2), float(j - 2)) / frameSize;
 			sum += coeffs[i] * coeffs[j] * blurHDRColor(tc);
 		}
 	return sum;
@@ -46,27 +47,51 @@ vec4 blurHDR()
 vec4 blurMID()
 {
 	const int blurRangeHalf = 3;
-    const int blurRange = 2 * blurRangeHalf + 1;
-    const vec2 textureSizeReciprocal = 1.0 / frameSize;
+	const int blurRange = 2 * blurRangeHalf + 1;
+	const vec2 textureSizeReciprocal = 1.0 / frameSize;
 
-    vec4 blurColor = vec4(0.0f);
-    for (int i = 0; i < blurRange; ++i)
-    {
-        for (int j = 0; j < blurRange; ++j)
-        {
-            vec2 tc = texCoords + textureSizeReciprocal * vec2(float(i - blurRangeHalf), float(j - blurRangeHalf));
-            blurColor += blurHDRColor(tc) / blurRange / blurRange;
-        }
-    }
+	vec4 blurColor = vec4(0.0f);
+	for (int i = 0; i < blurRange; ++i)
+	{
+		for (int j = 0; j < blurRange; ++j)
+		{
+			vec2 tc = texCoords + textureSizeReciprocal * vec2(float(i - blurRangeHalf), float(j - blurRangeHalf));
+			blurColor += blurHDRColor(tc) / blurRange / blurRange;
+		}
+	}
 
-    return blurColor;
+	return blurColor;
 }
 
-void draw(){
+float sobel(int sobelMat[9])
+{
+	const vec2 textureSizeReciprocal = 1.0 / frameSize;
+
+	vec4 result = vec4(0.0f);
+	for (int i = 0; i < 3; ++i)
+		for (int j = 0; j < 3; ++j)
+		{
+			vec2 tc = texCoords + textureSizeReciprocal * vec2(float(i - 1), float(j - 1));
+			result += sobelMat[3 * i + j] * texture(texture0, tc);
+		}
+
+	return dot(result, vec4(0.2126, 0.7152, 0.0722, 0));
+}
+
+void draw()
+{
 	color0 = texture(texture0, texCoords);
 	if (bloomEffectEnabled)
 	{
 		color0 += blurMID() * 0.9 + blurHDR() * 0.7;
+	}
+	if (NPREnabled)
+	{
+		int sobelHorizontal[9] = {1, 0, -1, 2, 0, -2, 1, 0, -1};
+		int sobelVertical[9] = {1, 2, 1, 0, 0, 0, -1, -2, -1};
+		float edge = sqrt(pow(sobel(sobelHorizontal),2) + pow(sobel(sobelVertical),2));
+		if(edge > 0.5)
+			color0 = vec4(0.0f,0.0f,0.0f,1.0f);
 	}
 }
 
