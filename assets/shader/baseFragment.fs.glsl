@@ -35,7 +35,7 @@ uniform float Ns;
 uniform int illum;
 
 uniform bool normalMappingEnabled;
-uniform bool lightMode;
+uniform int lightMode;
 
 uniform int haveMapDiffuse;
 uniform int haveMapHeight;
@@ -61,9 +61,13 @@ void deferredDraw()
 	vec4 Kdiffuse = vec4(Kd, 0.0);
 	float renderType = 0;
 
-	if (lightMode)
+	if (lightMode == 1)
 	{
 		renderType = 2;
+	}
+	else if (lightMode == 2)
+	{
+		renderType = 3;
 	}
 	else
 	{

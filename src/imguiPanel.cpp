@@ -31,11 +31,14 @@ void ImguiPanel::guiMenu(
     bool &effectTestMode, 
     bool &SSAOEnabled, 
     bool &FXAAEnabled,
+    bool &areaLightEnabled,
     int &gBufferMode, 
     float *cameraPosition, 
     float *cameraLookAt, 
     vec3 &directionalShadowPosition,
-    vec3 &pointShadowPosition)
+    vec3 &pointShadowPosition,
+    vec3 &areaLightPosition,
+    vec3 &areaLightRotate)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -146,6 +149,8 @@ void ImguiPanel::guiMenu(
             bloomEffectEnabled = true;
         ImGui::SameLine();
         ImGui::Checkbox("FXAA", &FXAAEnabled);
+        ImGui::SameLine();
+        ImGui::Checkbox("Area Light", &areaLightEnabled);
 
         if (ImGui::TreeNode("Point shadow light source Controller"))
         {
@@ -153,17 +158,50 @@ void ImguiPanel::guiMenu(
             {
                 ImGui::Text("X ");
                 ImGui::SameLine();
-                ImGui::SliderFloat("##DSLS-X", &pointShadowPosition.x, -15.0f, 15.0f);
+                ImGui::SliderFloat("##PSLS-X", &pointShadowPosition.x, -15.0f, 15.0f);
                 ImGui::Text("Y ");
                 ImGui::SameLine();
-                ImGui::SliderFloat("##DSLS-Y", &pointShadowPosition.y, -15.0f, 15.0f);
+                ImGui::SliderFloat("##PSLS-Y", &pointShadowPosition.y, -15.0f, 15.0f);
                 ImGui::Text("Z ");
                 ImGui::SameLine();
-                ImGui::SliderFloat("##DSLS-Z", &pointShadowPosition.z, -15.0f, 15.0f);
+                ImGui::SliderFloat("##PSLS-Z", &pointShadowPosition.z, -15.0f, 15.0f);
             }
             else
             {
                 ImGui::Text(" Point shadow is disabled. Enable it first.");
+            }
+            
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Area Light Controller"))
+        {
+            if (areaLightEnabled)
+            {
+                ImGui::Text("Translate:");
+                ImGui::Text("X ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##ALCT-X", &areaLightPosition.x, -15.0f, 15.0f);
+                ImGui::Text("Y ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##ALCT-Y", &areaLightPosition.y, -15.0f, 15.0f);
+                ImGui::Text("Z ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##ALCT-Z", &areaLightPosition.z, -15.0f, 15.0f);
+                ImGui::Text("Rotate:");
+                ImGui::Text("X ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##ALCTR-X", &areaLightRotate.x, -180.0f, 180.0f);
+                ImGui::Text("Y ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##ALCTR-Y", &areaLightRotate.y, -180.0f, 180.0f);
+                ImGui::Text("Z ");
+                ImGui::SameLine();
+                ImGui::SliderFloat("##ALCTR-Z", &areaLightRotate.z, -180.0f, 180.0f);
+            }
+            else
+            {
+                ImGui::Text(" Area Light is disabled. Enable it first.");
             }
             
             ImGui::TreePop();

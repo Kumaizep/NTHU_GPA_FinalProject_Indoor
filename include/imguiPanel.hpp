@@ -27,11 +27,14 @@ public:
         bool &effectTestMode, 
         bool& SSAOEnable, 
         bool &FXAAEnabled, 
+        bool &areaLightEnabled,
         int &gBufferMode, 
         float *cameraPosition, 
         float *cameraLookAt, 
         vec3 &directionalShadowPosition,
-        vec3 &pointShadowPosition);
+        vec3 &pointShadowPosition,
+        vec3 &areaLightPosition,
+        vec3 &areaLightRotate);
 
     void menuCleanup();
 

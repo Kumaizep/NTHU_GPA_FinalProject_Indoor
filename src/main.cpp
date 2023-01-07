@@ -6,6 +6,7 @@
 #include "frame.hpp"
 #include "shadowFrame.hpp"
 #include "imguiPanel.hpp"
+#include "areaLight.hpp"
 
 float timerCurrent = 0.0f;
 float timerLast = 0.0f;
@@ -27,6 +28,8 @@ float cameraPosition[] = {1.0, 1.0, 1.0};
 float cameraLookAt[] = {1.0, 1.0, 1.0};
 vec3 directionalShadowPosition = vec3(-2.845, 2.028, -1.293);
 vec3 pointShadowPosition = vec3(1.87659, 0.4625 , 0.103928);
+vec3 areaLightPosition = vec3(1.0, 0.5, -0.5);
+vec3 areaLightRotate = vec3(0.0, 0.0, 0.0);
 
 int gBufferMode = 0;
 bool effectTestMode = false;
@@ -39,11 +42,13 @@ bool normalMappingEnabled = false;
 bool bloomEffectEnabled = false;
 bool SSAOEnabled = false;
 bool FXAAEnabled = false;
+bool areaLightEnabled = true;
 
 bool needUpdateFBO = false;
 
 vector<Model> models;
 vector<Model> lights;
+AreaLight areaLight;
 
 vector<vec3> ssaoKernel;
 
@@ -117,6 +122,8 @@ void initialization(GLFWwindow *window)
     lights.push_back(Model("assets/indoor/Sphere.obj")
                          .withPosition(pointShadowPosition)
                          .withScale(vec3(0.22, 0.22, 0.22)));
+
+    areaLight.initialization(areaLightPosition, areaLightRotate);
 
     timerLast = glfwGetTime();
     mouseLast = vec2(0.0f, 0.0f);
@@ -258,6 +265,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
     shader.setBool("SSAOEnabled", SSAOEnabled);
     shader.setBool("FXAAEnabled", FXAAEnabled);
+    shader.setBool("areaLightEnabled", areaLightEnabled);
     shader.setBool("effectTestMode", effectTestMode);
 
     // others
@@ -268,7 +276,7 @@ void display(Shader &shader, Camera &camera, s_mode shadowMode = off)
 {
     setupShaderUniform(shader, camera, shadowMode);
 
-    shader.setBool("lightMode", 0);
+    shader.setInt("lightMode", 0);
     for (auto &it : models)
     {
         shader.setMat4("um4m", it.getModelMatrix());
@@ -276,12 +284,18 @@ void display(Shader &shader, Camera &camera, s_mode shadowMode = off)
     }
     if (bloomEffectEnabled)
     {
-        shader.setBool("lightMode", 1);
+        shader.setInt("lightMode", 1);
         for (auto &it : lights)
         {
             shader.setMat4("um4m", it.getModelMatrix());
             it.draw(shader);
         }
+    }
+
+    if (areaLightEnabled)
+    {
+        shader.setInt("lightMode", 2);
+        areaLight.drawModel(shader);
     }
 }
 
@@ -346,6 +360,7 @@ void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &fr
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     setupShaderUniform(deferredShader, camera);
+    areaLight.drawSetup(deferredShader, 10, 11);
     frame1.draw(deferredShader);
 
     // render post-processing effects
@@ -498,12 +513,17 @@ int main(int argc, char **argv)
             effectTestMode, 
             SSAOEnabled, 
             FXAAEnabled, 
+            areaLightEnabled, 
             gBufferMode, 
             cameraPosition, 
             cameraLookAt, 
             directionalShadowPosition,
-            pointShadowPosition);
+            pointShadowPosition,
+            areaLightPosition,
+            areaLightRotate);
         shadowCamera.setPosition(directionalShadowPosition);
+        areaLight.setTranslate(areaLightPosition);
+        areaLight.setRotate(areaLightRotate);
         lights[0].setPosition(pointShadowPosition);
 
         // swap buffer from back to front
