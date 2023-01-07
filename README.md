@@ -14,7 +14,7 @@
 - [x] Screen Space Ambient Occlusion (SSAO)
 - [x] Point light shadow
 - [ ] Screen space reflection
-- [ ] Non photorealistic rendering
+- [x] Non photorealistic rendering
 - [x] Fast Approximate Anti-Aliasing (FXAA)
-- [ ] Area light
+- [x] Area light
 - [ ] Volumetric light
