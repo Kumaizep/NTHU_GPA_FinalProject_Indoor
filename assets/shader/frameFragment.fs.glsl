@@ -82,9 +82,9 @@ float sobel(int sobelMat[9])
 
 void reflect()
 {
-    float maxDistance = 8;
-    float resolution = 0.3;
-    int steps = 5;
+    float maxDistance = 2;
+    float resolution = 0.5;
+    int steps = 10;
     float thickness = 0.1;
 
     vec4 uv = vec4(0.0);
@@ -92,13 +92,13 @@ void reflect()
     vec4 positionFrom = um4v * vec4(texture(texture1, texCoords).xyz, 1.0);
 
     vec3 unitPositionFrom = normalize(positionFrom.xyz);
-    vec3 normal = normalize((um4v * vec4(texture(texture2, texCoords).xyz, 0.0)).xyz);
+    vec3 normal = normalize(mat3(um4v) * texture(texture2, texCoords).xyz);
     vec3 pivot = normalize(unitPositionFrom - 2 * dot(normal, unitPositionFrom) * normal);
 
     vec4 positionTo = positionFrom;
 
-    vec4 startView = vec4(positionFrom.xyz + (pivot * 0.0), 1.0);
-    vec4 endView = vec4(positionFrom.xyz + (pivot * maxDistance), 1.0);
+    vec4 startView = positionFrom;
+    vec4 endView = positionFrom + vec4((pivot * maxDistance), 0.0);
 
     vec4 startFrag = startView;
     startFrag = um4p * startFrag;
@@ -187,9 +187,9 @@ void reflect()
         hit1 * positionTo.w * (1 - max(dot(-unitPositionFrom, pivot), 0)) * (1 - clamp(depth / thickness, 0, 1)) * (1 - clamp(length(positionTo - positionFrom) / maxDistance, 0, 1)) * (uv.x < 0 || uv.x > 1 ? 0 : 1) * (uv.y < 0 || uv.y > 1 ? 0 : 1);
 
     visibility = clamp(visibility, 0, 1);
-
-    //uv.ba = vec2(visibility);
-    color0 += texture(texture0, uv.xy) * visibility;
+    visibility = 0.1;
+    if(abs(uv.x)<1&&abs(uv.y)<1)
+    color0  = color0 *(1-visibility) + texture(texture0, uv.xy) * visibility;
 }
 
 void main()
