@@ -65,8 +65,8 @@ void AreaLight::updateModel()
 	mat4 rotateXMatrix   = rotate(mat4(1.0f), radians(rotateVec.x), vec3(1.0f, 0.0f, 0.0f));
 	mat4 rotateYMatrix   = rotate(mat4(1.0f), radians(rotateVec.y), vec3(0.0f, 1.0f, 0.0f));
 	mat4 rotateZMatrix   = rotate(mat4(1.0f), radians(rotateVec.z), vec3(0.0f, 0.0f, 1.0f));
-	rotateMatrix    = rotateYMatrix * rotateZMatrix * rotateXMatrix;
-	modelMatrix = translateMatrix * rotateMatrix;
+	rotateMatrix    	 = rotateYMatrix * rotateZMatrix * rotateXMatrix;
+	modelMatrix 		 = translateMatrix * rotateMatrix;
 }
 
 

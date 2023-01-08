@@ -55,6 +55,7 @@ public:
     vec3 getLookAt();
     mat4 getPerspective();
     mat4 getView();
+    mat4 getRotate();
 
     void processMove(MoveDirection moveDirction, float timeDifferent);
     void processTrackball(float thetaDifferent, float phiDifferent);

@@ -111,6 +111,15 @@ mat4 Camera::getView()
     return lookAt(position, position + front, top);
 }
 
+mat4 Camera::getRotate()
+{
+    mat4 rotateXMatrix   = rotate(mat4(1.0f), radians(phi), right);
+    mat4 rotateYMatrix   = rotate(mat4(1.0f), radians(theta), top);
+    // mat4 rotateZMatrix   = rotate(mat4(1.0f), radians(rotateVec.z), vec3(0.0f, 0.0f, 1.0f));
+    mat4 rotateMatrix    = rotateYMatrix * rotateXMatrix;
+    return rotateMatrix;
+}
+
 void Camera::processMove(MoveDirection moveDirction, float timeDifferent)
 {
     float shift = moveSpeed * timeDifferent;

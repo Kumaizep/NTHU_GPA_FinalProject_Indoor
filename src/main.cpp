@@ -254,6 +254,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
         shader.setMat4("um4p", camera.getPerspective());
     shader.setMat4("um4v", camera.getView());
     shader.setMat4("um4m", mat4(1.0f));
+    shader.setMat4("um4r", camera.getRotate());
 
     // point light source
     vec4 lightpos = camera.getView() * vec4(lights[0].getPosition(), 1);
