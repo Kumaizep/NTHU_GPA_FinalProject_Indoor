@@ -27,6 +27,7 @@ public:
         bool &effectTestMode, 
         bool &SSAOEnabled, 
         bool &NPREnabled, 
+        bool &SSREnabled, 
         bool &FXAAEnabled, 
         bool &areaLightEnabled,
         bool &volumetricLightEnabled,

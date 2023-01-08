@@ -43,6 +43,7 @@ bool normalMappingEnabled = false;
 bool bloomEffectEnabled = false;
 bool SSAOEnabled = false;
 bool FXAAEnabled = false;
+bool SSREnabled = false;
 bool NPREnabled = false;
 bool areaLightEnabled = false;
 bool volumetricLightEnabled = false;
@@ -271,6 +272,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
     shader.setBool("bloomEffectEnabled", bloomEffectEnabled);
     shader.setBool("SSAOEnabled", SSAOEnabled);
     shader.setBool("NPREnabled", NPREnabled);
+    shader.setBool("SSREnabled", SSREnabled);
     shader.setBool("FXAAEnabled", FXAAEnabled);
     shader.setBool("areaLightEnabled", areaLightEnabled);
     shader.setBool("volumetricLightEnabled", volumetricLightEnabled);
@@ -540,6 +542,7 @@ int main(int argc, char **argv)
             effectTestMode, 
             SSAOEnabled, 
             NPREnabled, 
+            SSREnabled, 
             FXAAEnabled, 
             areaLightEnabled, 
             volumetricLightEnabled, 

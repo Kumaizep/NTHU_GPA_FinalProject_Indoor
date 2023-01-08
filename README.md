@@ -17,4 +17,4 @@
 - [x] Non photorealistic rendering
 - [x] Fast Approximate Anti-Aliasing (FXAA)
 - [x] Area light
-- [ ] Volumetric light
+- [x] Volumetric light
