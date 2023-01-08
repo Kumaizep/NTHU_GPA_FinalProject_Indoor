@@ -37,14 +37,14 @@ vec4 blurHDRColor(vec2 tc)
         return vec4(0.0, 0.0, 0.0, 0.0);
 }
 
-const float coeffs[5] = float[5](0.0625f, 0.25f, 0.375, 0.25f, 0.0625f);
+const float coeffs[11] = float[11](0.0663417, 0.0794254, 0.0913609, 0.100969, 0.107213, 0.109379, 0.107213, 0.100969, 0.0913609, 0.0794254, 0.0663417);
 vec4 blurHDR()
 {
-	vec4 sum = vec4(0.0);
-    for (int i = 0; i < 5; ++i)
-        for (int j = 0; j < 5; ++j)
+    vec4 sum = vec4(0.0);
+    for (int i = 0; i < 11; ++i)
+        for (int j = 0; j < 11; ++j)
         {
-            vec2 tc = texCoords + vec2(float(i - 2), float(j - 2)) / frameSize;
+            vec2 tc = texCoords + vec2(float(i - 5), float(j - 5)) / frameSize;
             sum += coeffs[i] * coeffs[j] * blurHDRColor(tc);
         }
     return sum;
@@ -52,7 +52,7 @@ vec4 blurHDR()
 
 vec4 blurMID()
 {
-	const int blurRangeHalf = 3;
+	const int blurRangeHalf = 5;
     const int blurRange = 2 * blurRangeHalf + 1;
     const vec2 textureSizeReciprocal = 1.0 / frameSize;
 
@@ -119,7 +119,7 @@ void reflect()
 	color0 = texture(texture0, texCoords);
 	if (bloomEffectEnabled)
 	{
-		color0 += blurMID() * 0.9 + blurHDR() * 0.7;
+		color0 += blurMID() * 0.9 + blurHDR() * 0.6;
 	}
 	if (NPREnabled)
 	{

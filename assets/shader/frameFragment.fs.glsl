@@ -52,7 +52,7 @@ vec4 blurHDR()
 
 vec4 blurMID()
 {
-	const int blurRangeHalf = 3;
+	const int blurRangeHalf = 5;
     const int blurRange = 2 * blurRangeHalf + 1;
     const vec2 textureSizeReciprocal = 1.0 / frameSize;
 
@@ -119,7 +119,7 @@ void reflect()
 	color0 = texture(texture0, texCoords);
 	if (bloomEffectEnabled)
 	{
-		color0 += blurMID() * 0.9 + blurHDR() * 0.7;
+		color0 += blurMID() * 0.9 + blurHDR() * 0.6;
 	}
 	if (NPREnabled)
 	{
