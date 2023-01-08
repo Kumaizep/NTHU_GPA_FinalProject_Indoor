@@ -85,17 +85,15 @@ void reflect()
     float maxDistance = 8;
     float resolution = 0.3;
     int steps = 5;
-    float thickness = 0.5;
-	
-    vec2 texCoord = gl_FragCoord.xy / frameSize;
+    float thickness = 0.1;
 
     vec4 uv = vec4(0.0);
 
-    vec4 positionFrom = um4v * texture(texture1, texCoord);
+    vec4 positionFrom = um4v * vec4(texture(texture1, texCoords).xyz, 1.0);
 
     vec3 unitPositionFrom = normalize(positionFrom.xyz);
-    vec3 normal = normalize((um4v * texture(texture2, texCoord)).xyz);
-    vec3 pivot = normalize(2*normal + unitPositionFrom);
+    vec3 normal = normalize((um4v * vec4(texture(texture2, texCoords).xyz, 0.0)).xyz);
+    vec3 pivot = normalize(unitPositionFrom - 2 * dot(normal, unitPositionFrom) * normal);
 
     vec4 positionTo = positionFrom;
 
@@ -138,7 +136,7 @@ void reflect()
     {
         frag += increment;
         uv.xy = frag / frameSize;
-        positionTo = um4v * texture(texture1, uv.xy);
+        positionTo = um4v * vec4(texture(texture1, uv.xy).xyz, 1.0);
 
         search1 =
             mix((frag.y - startFrag.y) / deltaY, (frag.x - startFrag.x) / deltaX, useX);
@@ -167,7 +165,7 @@ void reflect()
     {
         frag = mix(startFrag.xy, endFrag.xy, search1);
         uv.xy = frag / frameSize;
-        positionTo = um4v * texture(texture1, uv.xy);
+        positionTo = um4v * vec4(texture(texture1, uv.xy).xyz, 1.0);
 
         viewDistance = (startView.y * endView.y) / mix(endView.y, startView.y, search1);
         depth = viewDistance - positionTo.y;
@@ -190,9 +188,8 @@ void reflect()
 
     visibility = clamp(visibility, 0, 1);
 
-    uv.ba = vec2(visibility);
-
-    color0 = uv;
+    //uv.ba = vec2(visibility);
+    color0 += texture(texture0, uv.xy) * visibility;
 }
 
 void main()
