@@ -69,6 +69,10 @@ void deferredDraw()
 	{
 		renderType = 3;
 	}
+	else if (lightMode == 3)
+	{
+		renderType = 5;
+	}
 	else
 	{
 		if (haveMapDiffuse == 1)

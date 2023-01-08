@@ -243,8 +243,8 @@ vec3 LTC_Evaluate(vec3 N, vec3 V, vec3 P, mat3 Minv, vec3 points[4])
     // Fetch the form factor for horizon clipping
     float scale = texture(texture11, uv).w;
 	// TAG: areaLight no shadow
-    //float sum = len*scale;
-    float sum = len;
+    float sum = len * scale;
+    // float sum = len;
     if (!behind)
         sum = 0.0;
 
@@ -342,12 +342,19 @@ void defaultDraw()
 		if (blinnPhongEnabled)
 		{
 			// Blinn Phong render
-			vec4 shadow_coord = shadow_sbpv * vec4(texture(texture1, texCoords).xyz,1);
-			float shadow = textureProj(texture8, shadow_coord+ vec4(0,0,-0.02,0));
-			if(directionalShadowEnabled)
-				color0 += blinnNPR(N, L, H, shadow, SSAO);
-			else
-				color0 += blinnNPR(N, L, H, 1.0f, SSAO);
+			// if (renderType == 5)
+			// {
+			// 	color0 = vec4(1.0, 1.0, 1.0, 100.0);
+			// }
+			// else
+			// {
+				vec4 shadow_coord = shadow_sbpv * vec4(texture(texture1, texCoords).xyz,1);
+				float shadow = textureProj(texture8, shadow_coord+ vec4(0,0,-0.02,0));
+				if(directionalShadowEnabled)
+					color0 += blinnNPR(N, L, H, shadow, SSAO);
+				else
+					color0 += blinnNPR(N, L, H, 1.0f, SSAO);
+			// }
 		}
 		if (bloomEffectEnabled)
 		{
@@ -421,8 +428,7 @@ void gBufferDraw()
 			// color0 = vec4(vec3(texture(texture6, texCoords).w), 1.0);
 			// color0 = texture(texture0, texCoords);
 			color0 = vec4(ShadowCalculation());
-			// SSAO();
-			// defaultDraw();
+			// color0 = vec4(vec3(texture(texture6, texCoords).w), 1.0);
 
 			break;
 		default:
@@ -431,7 +437,20 @@ void gBufferDraw()
 	}
 }
 
+void genProjectionColor()
+{
+	vec4 color = texture(texture2, texCoords);
+	float renderType = texture(texture2, texCoords).w;
+	if (renderType == 5)
+		color1 = vec4(vec3(1.0), 1.0);
+	else if (color.xyz == vec3(0.2))
+		color1 = vec4(vec3(0.19), 1.0);
+	else
+		color1 = vec4(vec3(0.0), 1.0);
+}
+
 void main()
 {
 	gBufferDraw();
+	genProjectionColor();
 }

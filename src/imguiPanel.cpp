@@ -33,6 +33,7 @@ void ImguiPanel::guiMenu(
     bool &NPREnabled, 
     bool &FXAAEnabled,
     bool &areaLightEnabled,
+    bool &volumetricLightEnabled,
     int &gBufferMode, 
     float *cameraPosition, 
     float *cameraLookAt, 
@@ -82,11 +83,16 @@ void ImguiPanel::guiMenu(
     {
         ImGui::Checkbox("Blinn-Phong", &blinnPhongEnabled);
         if (!blinnPhongEnabled)
+        {
+            volumetricLightEnabled = false;
             directionalShadowEnabled = false;
+        }
         ImGui::SameLine();
         ImGui::Checkbox("Directional Shadow", &directionalShadowEnabled);
         if (directionalShadowEnabled)
             blinnPhongEnabled = true;
+        if (!directionalShadowEnabled)
+            volumetricLightEnabled = false;
         ImGui::SameLine();
         ImGui::Checkbox("Normal Mapping", &normalMappingEnabled);
         ImGui::SameLine();
@@ -154,6 +160,13 @@ void ImguiPanel::guiMenu(
         ImGui::Checkbox("FXAA", &FXAAEnabled);
         ImGui::SameLine();
         ImGui::Checkbox("Area Light", &areaLightEnabled);
+        ImGui::SameLine();
+        ImGui::Checkbox("Volumetric Light", &volumetricLightEnabled);
+        if (volumetricLightEnabled)
+        {
+            blinnPhongEnabled = true;
+            directionalShadowEnabled = true;
+        }
 
         if (ImGui::TreeNode("Point shadow light source Controller"))
         {

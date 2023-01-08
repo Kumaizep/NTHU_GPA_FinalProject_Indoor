@@ -30,6 +30,7 @@ vec3 directionalShadowPosition = vec3(-2.845, 2.028, -1.293);
 vec3 pointShadowPosition = vec3(1.87659, 0.4625 , 0.103928);
 vec3 areaLightPosition = vec3(1.0, 0.5, -0.5);
 vec3 areaLightRotate = vec3(0.0, 0.0, 0.0);
+vec3 volumetricLightsPosition = vec3(-2.845 * 5.0, 2.028 * 2.5, -1.293 * 5.0);
 
 int gBufferMode = 0;
 bool effectTestMode = false;
@@ -44,11 +45,13 @@ bool SSAOEnabled = false;
 bool FXAAEnabled = false;
 bool NPREnabled = false;
 bool areaLightEnabled = false;
+bool volumetricLightEnabled = false;
 
 bool needUpdateFBO = false;
 
 vector<Model> models;
 vector<Model> lights;
+vector<Model> volumetricLights;
 AreaLight areaLight;
 
 vector<vec3> ssaoKernel;
@@ -62,7 +65,6 @@ Shader SSAOShader;
 Shader deferredShader;
 Shader frameShader;
 Shader FXAAShader;
-Shader FXAAShader2;
 
 float calcLerp(float a, float b, float f)
 {
@@ -123,6 +125,9 @@ void initialization(GLFWwindow *window)
     lights.push_back(Model("assets/indoor/Sphere.obj")
                          .withPosition(pointShadowPosition)
                          .withScale(vec3(0.22, 0.22, 0.22)));
+
+    volumetricLights.push_back(Model("assets/indoor/Sphere.obj")
+                         .withPosition(volumetricLightsPosition));
 
     areaLight.initialization(areaLightPosition, areaLightRotate);
 
@@ -268,6 +273,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
     shader.setBool("NPREnabled", NPREnabled);
     shader.setBool("FXAAEnabled", FXAAEnabled);
     shader.setBool("areaLightEnabled", areaLightEnabled);
+    shader.setBool("volumetricLightEnabled", volumetricLightEnabled);
     shader.setBool("effectTestMode", effectTestMode);
 
     // others
@@ -299,6 +305,16 @@ void display(Shader &shader, Camera &camera, s_mode shadowMode = off)
         shader.setInt("lightMode", 2);
         areaLight.drawModel(shader);
     }
+
+    if (volumetricLightEnabled)
+    {
+        shader.setInt("lightMode", 3);
+        for (auto &it : volumetricLights)
+        {
+            shader.setMat4("um4m", it.getModelMatrix());
+            it.draw(shader);
+        }
+    }   
 }
 
 void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &frame1, ShadowFrame &shadowFrame, ShadowFrame &pointShadowFrame)
@@ -371,6 +387,15 @@ void windowUpdate(Camera &camera, Camera &shadowCamera, Frame &frame0, Frame &fr
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     setupShaderUniform(frameShader, camera);
+
+    vec4 lightPositionOnScreen = camera.getPerspective() * camera.getView() * volumetricLights[0].getModelMatrix() * vec4(vec3(0.0), 1.0);
+    // frameShader.setMat4("volumetricLightsModel", volumetricLights[0].getModelMatrix());
+    float LPOSX = lightPositionOnScreen.x / lightPositionOnScreen.w;
+    LPOSX = LPOSX * 0.5 + 0.5;
+    float LPOSY = lightPositionOnScreen.y / lightPositionOnScreen.w;
+    LPOSY = LPOSY * 0.5 + 0.5;
+    frameShader.setVec2("lightPositionOnScreen", LPOSX, LPOSY);
+    // cout << "DEBUG::MAIN::D::light pos on S: " << LPOSX * 1600 << " " << 900 - LPOSY * 900 << endl;
     frame0.draw(frameShader);
 
     // FXAA effects
@@ -468,7 +493,7 @@ int main(int argc, char **argv)
     dumpInfo();
     Camera camera = Camera()
                         .withPosition(vec3(4.0f, 1.0f, -1.5f))
-                        .withFar(10.0f)
+                        .withFar(50.0f)
                         .withMoveSpeed(3.0f)
                         .withTheta(180.0f);
     Camera shadowCamera = Camera()
@@ -517,6 +542,7 @@ int main(int argc, char **argv)
             NPREnabled, 
             FXAAEnabled, 
             areaLightEnabled, 
+            volumetricLightEnabled, 
             gBufferMode, 
             cameraPosition, 
             cameraLookAt, 
@@ -528,6 +554,10 @@ int main(int argc, char **argv)
         areaLight.setTranslate(areaLightPosition);
         areaLight.setRotate(areaLightRotate);
         lights[0].setPosition(pointShadowPosition);
+        volumetricLights[0].setPosition(vec3(
+            directionalShadowPosition.x * 5.0,
+            directionalShadowPosition.y * 2.5,
+            directionalShadowPosition.z * 5.0));
 
         // swap buffer from back to front
         glfwSwapBuffers(window);

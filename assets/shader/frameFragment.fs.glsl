@@ -20,6 +20,12 @@ uniform int gBufferMode;
 uniform bool effectTestMode;
 uniform bool bloomEffectEnabled;
 uniform bool NPREnabled;
+uniform bool volumetricLightEnabled;
+
+uniform mat4 um4p;
+uniform mat4 um4v;
+uniform mat4 volumetricLightsModel;
+uniform vec2 lightPositionOnScreen;
 
 vec4 blurHDRColor(vec2 tc)
 {
@@ -78,6 +84,36 @@ float sobel(int sobelMat[9])
 	return dot(result, vec4(0.2126, 0.7152, 0.0722, 0));
 }
 
+vec4 volumetricLight()
+{	
+	const float exposure = 0.2;
+	const float decay = 0.96815;
+	const float density = 0.926;
+	const float weight = 0.58767;
+	const int NUM_SAMPLES = 100;
+
+	vec2 deltaTextCoord = vec2(texCoords - lightPositionOnScreen.xy);
+	vec2 textCoo = texCoords;
+	deltaTextCoord *= 1.0 /  float(NUM_SAMPLES) * density;
+	float illuminationDecay = 1.0;
+	vec4 result = vec4(0.0); 
+	
+	for(int i=0; i < NUM_SAMPLES; i++)
+	{
+		textCoo -= deltaTextCoord;
+		vec4 samples = texture(texture1, textCoo);
+		
+		samples *= illuminationDecay * weight;
+		
+		result += samples;
+		
+		illuminationDecay *= decay;
+	}
+
+	result *= exposure;
+	return result;
+}
+
 void draw()
 {
 	color0 = texture(texture0, texCoords);
@@ -93,9 +129,14 @@ void draw()
 		if(edge > 0.5)
 			color0 = vec4(0.0f,0.0f,0.0f,1.0f);
 	}
+	// if (volumetricLightEnabled)
+	// 	color0 += volumetricLight();
+	if (volumetricLightEnabled)
+		color0 += volumetricLight() * 0.4;
 }
 
 void main()
 {
 	draw();
+	// color0 = volumetricLight();
 }

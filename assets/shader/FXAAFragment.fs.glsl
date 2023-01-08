@@ -3,9 +3,12 @@
 out vec4 color0;
 in vec2 texCoords;
 
+layout(location = 0) uniform sampler2D texture0;
+layout(location = 13) uniform sampler2D texture1;
 uniform vec2 frameSize;
-uniform sampler2D texture0;
 uniform bool FXAAEnabled;
+
+uniform bool effectTestMode;
 
 
 // compatibility #defines
@@ -239,4 +242,10 @@ void main()
 		color0 = vec4(FxaaPixelShader(texCoords, Source, vec2(SourceSize.z, SourceSize.w)), 1.0) * 1.0;
 	else
 		color0 = texture(texture0, texCoords);
+
+    if (effectTestMode)
+    {
+        color0 = texture(texture1, texCoords);
+        // color0 = vec4(0.5);
+    }
 } 

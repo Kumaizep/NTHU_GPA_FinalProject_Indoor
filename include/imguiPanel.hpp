@@ -29,6 +29,7 @@ public:
         bool &NPREnabled, 
         bool &FXAAEnabled, 
         bool &areaLightEnabled,
+        bool &volumetricLightEnabled,
         int &gBufferMode, 
         float *cameraPosition, 
         float *cameraLookAt, 
