@@ -281,6 +281,7 @@ void setupShaderUniform(Shader &shader, Camera &camera, s_mode shadowMode = off)
 
     // others
     shader.setVec2("frameSize", (float)frameWidth, (float)frameHeight);
+    shader.setVec3("cameraPosition", camera.getPosition());
 }
 
 void display(Shader &shader, Camera &camera, s_mode shadowMode = off)

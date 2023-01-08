@@ -239,7 +239,6 @@ void reflect()
     color0  = color0 *(1-visibility) + texture(texture0, uv.xy) * visibility;
 }
 
-
 void main()
 {
 	color0 = texture(texture0, texCoords);
@@ -255,8 +254,12 @@ void main()
         if (edge > 0.5)
             color0 = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
-    if (texture(texture2, texCoords).w == 4)
-        reflect();
+    if (SSREnabled)
+    {
+    	if (texture(texture2, texCoords).w == 4)
+        	reflect();
+    }
+    
 
 	if (volumetricLightEnabled)
 		color0 += volumetricLight() * 0.4;

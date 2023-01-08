@@ -100,8 +100,8 @@ void ImguiPanel::guiMenu(
         ImGui::Checkbox("Bloom Effect", &bloomEffectEnabled);
         if (!bloomEffectEnabled)
             pointShadowEnabled = false;
-        ImGui::SameLine();
-        ImGui::Checkbox("Test Mode", &effectTestMode);
+        // ImGui::SameLine();
+        // ImGui::Checkbox("Test Mode", &effectTestMode);
 
         if (ImGui::TreeNode("Directional shadow light source Controller"))
         {
@@ -140,8 +140,8 @@ void ImguiPanel::guiMenu(
             ImGui::RadioButton("Specular", &gBufferMode, 5);
             // ImGui::SameLine();
             // ImGui::RadioButton("Disable", &gBufferMode, 6);
-            ImGui::SameLine();
-            ImGui::RadioButton("Devlope Mode", &gBufferMode, 7);
+            // ImGui::SameLine();
+            // ImGui::RadioButton("Devlope Mode", &gBufferMode, 7);
 
             ImGui::TreePop();
         }
