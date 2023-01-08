@@ -83,9 +83,9 @@ float sobel(int sobelMat[9])
 void reflect()
 {
     float maxDistance = 2;
-    float resolution = 0.5;
+    float resolution = 0.7;
     int steps = 10;
-    float thickness = 0.1;
+    float thickness = 0.05;
 
     vec4 uv = vec4(0.0);
 
@@ -187,8 +187,8 @@ void reflect()
         hit1 * positionTo.w * (1 - max(dot(-unitPositionFrom, pivot), 0)) * (1 - clamp(depth / thickness, 0, 1)) * (1 - clamp(length(positionTo - positionFrom) / maxDistance, 0, 1)) * (uv.x < 0 || uv.x > 1 ? 0 : 1) * (uv.y < 0 || uv.y > 1 ? 0 : 1);
 
     visibility = clamp(visibility, 0, 1);
-    visibility = 0.1;
-    if(abs(uv.x)<1&&abs(uv.y)<1)
+    visibility = 0.2;
+    if(hit1>0 && abs(uv.x)<1&&abs(uv.y)<1)
     color0  = color0 *(1-visibility) + texture(texture0, uv.xy) * visibility;
 }
 
