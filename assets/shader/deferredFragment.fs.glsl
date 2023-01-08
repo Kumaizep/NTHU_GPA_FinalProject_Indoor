@@ -248,9 +248,8 @@ vec3 LTC_Evaluate(vec3 N, vec3 V, vec3 P, mat3 Minv, vec3 points[4])
 
     // Fetch the form factor for horizon clipping
     float scale = texture(texture11, uv).w;
-	// TAG: areaLight no shadow
-    //float sum = len*scale;
-    float sum = len;
+
+    float sum = len*scale;
     if (!behind)
         sum = 0.0;
 
